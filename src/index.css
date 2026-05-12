@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    font-family: 'Noto Serif SC', 'Source Han Serif CN', 'STSong', 'SimSun', serif;
+    font-size: 18px;
+  }
+
+  body {
+    background-color: #FDF3E0;
+    min-height: 100dvh;
+  }
+}
+
+/* ── Nanyang / Peranakan tile background ─────────────────────────── */
+@layer utilities {
+  .nanyang-bg {
+    background-color: #FDF3E0;
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        transparent 0px,
+        transparent 18px,
+        rgba(193, 68, 14, 0.10) 18px,
+        rgba(193, 68, 14, 0.10) 19px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        transparent 0px,
+        transparent 18px,
+        rgba(193, 68, 14, 0.10) 18px,
+        rgba(193, 68, 14, 0.10) 19px
+      );
+    background-size: 26px 26px;
+  }
+
+  /* Ornate card border inspired by Peranakan tiles */
+  .tile-card {
+    @apply bg-cream border-2 border-brick rounded-lg shadow-md relative overflow-hidden;
+  }
+
+  .tile-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 3px solid transparent;
+    border-radius: 0.4rem;
+    background:
+      linear-gradient(#FDF3E0, #FDF3E0) padding-box,
+      repeating-linear-gradient(
+        45deg,
+        #C9962A 0px, #C9962A 4px,
+        #8B2500 4px, #8B2500 8px
+      ) border-box;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Decorative header band with tile motif */
+  .nanyang-header {
+    background: linear-gradient(135deg, #8B2500 0%, #C1440E 50%, #8B2500 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nanyang-header::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      90deg,
+      rgba(201, 150, 42, 0.25) 0px,
+      rgba(201, 150, 42, 0.25) 1px,
+      transparent 1px,
+      transparent 20px
+    );
+    pointer-events: none;
+  }
+
+  /* Flower-tile decoration used in GameMenu */
+  .tile-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #8B2500;
+  }
+
+  .tile-divider::before,
+  .tile-divider::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #C9962A, transparent);
+  }
+
+  /* Card states for match game */
+  .match-card-default  { @apply bg-cream border-2 border-brick-mid rounded-lg cursor-pointer transition-all hover:scale-105 hover:shadow-lg hover:border-brick; }
+  .match-card-selected { @apply bg-gold border-2 border-brick rounded-lg scale-105 shadow-lg ring-2 ring-gold; }
+  .match-card-matched  { @apply bg-nanyang-teal border-2 border-nanyang-green rounded-lg opacity-70 cursor-default; }
+  .match-card-wrong    { @apply bg-brick-light border-2 border-brick rounded-lg animate-shake; }
+}
+
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
+
+/* Remove default Vite styles */
+#root {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}

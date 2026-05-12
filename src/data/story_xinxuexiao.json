@@ -1,0 +1,595 @@
+{
+  "id": "xinxuexiao",
+  "title": "立化中学",
+  "emoji": "🏫",
+  "tagline": "新同学，新鲜事",
+  "unitRef": 1,
+  "episodes": [
+    {
+      "id": 1,
+      "title": "第一天",
+      "vocabFocus": ["淘气", "直率", "内向", "人缘"],
+      "scenes": [
+        {
+          "id": "e1s1",
+          "type": "narration",
+          "bg": "morning",
+          "text": "新学期，第一天。\n\n你站在立化中学的走廊前，书包里装着崭新的课本。\n\n从今天起，你就是这里的新同学了。",
+          "next": "e1s2"
+        },
+        {
+          "id": "e1s2",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "推开教室的门，\n三十多双眼睛同时转向你。\n\n你感到心跳加速。",
+          "next": "e1s3"
+        },
+        {
+          "id": "e1s3",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "陈老师",
+          "text": "同学们，今天我们班来了一位新同学。\n请先做个自我介绍吧。",
+          "next": "e1s4"
+        },
+        {
+          "id": "e1s4",
+          "type": "choice",
+          "bg": "classroom",
+          "setup": "你走上讲台，深吸一口气。\n全班都在看着你。",
+          "choices": [
+            {
+              "text": "大家好！我叫……希望大家多多关照！",
+              "next": "e1s5",
+              "xp": 15,
+              "rel": { "xiaomin": 8, "zhaoyou": 5 },
+              "feedback": "你微笑着挥了挥手。\n有几个同学也笑了回来。"
+            },
+            {
+              "text": "你们好，我叫……请多指教。",
+              "next": "e1s5",
+              "xp": 10,
+              "rel": { "xiaomin": 3 },
+              "feedback": "简短而有礼貌。\n老师点了点头。"
+            },
+            {
+              "text": "嗯……你们好……",
+              "next": "e1s5",
+              "xp": 5,
+              "rel": { "chenjing": 8 },
+              "feedback": "声音有点小，但也没关系。\n角落里有个女生，似乎朝你看了一眼。"
+            }
+          ]
+        },
+        {
+          "id": "e1s5",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "就在你说完的瞬间，\n教室后排传来一声大笑。",
+          "next": "e1s6"
+        },
+        {
+          "id": "e1s6",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "赵宇",
+          "text": "哈！新同学，别紧张！\n我第一天上台也忘词了，比你还糗！",
+          "next": "e1s7"
+        },
+        {
+          "id": "e1s7",
+          "type": "vocab_fill",
+          "bg": "corridor",
+          "speaker": "小敏",
+          "before": "别理他。赵宇就是这样，",
+          "blank": "淘气",
+          "after": "得很，但其实没有恶意。",
+          "options": ["淘气", "骄傲", "内向", "冷漠"],
+          "xp": 20,
+          "correct_next": "e1s8",
+          "wrong_next": "e1s8",
+          "correction": "淘气：形容孩子顽皮、爱捣蛋、不听大人话的样子。"
+        },
+        {
+          "id": "e1s8",
+          "type": "narration",
+          "bg": "corridor",
+          "text": "小敏说这话时，眼神直接，语气坦然，\n完全不像是在打探八卦——\n只是在陈述一个事实。",
+          "next": "e1s9"
+        },
+        {
+          "id": "e1s9",
+          "type": "vocab_fill",
+          "bg": "corridor",
+          "speaker": null,
+          "before": "你发现小敏就是这样的人——",
+          "blank": "直率",
+          "after": "，有什么说什么，从不绕弯子。",
+          "options": ["直率", "淘气", "内向", "严厉"],
+          "xp": 20,
+          "correct_next": "e1s10",
+          "wrong_next": "e1s10",
+          "correction": "直率：性格坦诚直爽，说话不拐弯抹角，有什么说什么。"
+        },
+        {
+          "id": "e1s10",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "午休时，你注意到教室角落里有一个女生，\n独自看书，没有跟任何人说话。\n\n全班聊得热火朝天，她像是活在另一个世界里。",
+          "next": "e1s11"
+        },
+        {
+          "id": "e1s11",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "小敏",
+          "text": "那是陈静。她来了整整一年，\n跟班上大多数人还是不熟。\n\n不是因为她骄傲，只是……",
+          "next": "e1s12"
+        },
+        {
+          "id": "e1s12",
+          "type": "vocab_fill",
+          "bg": "classroom",
+          "speaker": "小敏",
+          "before": "她性格",
+          "blank": "内向",
+          "after": "，不喜欢主动跟人说话。\n但其实她人很好，就是需要时间。",
+          "options": ["内向", "直率", "淘气", "冷漠"],
+          "xp": 20,
+          "correct_next": "e1s13",
+          "wrong_next": "e1s13",
+          "correction": "内向：性格偏向内敛，不爱表现自己，不善于与陌生人交往。"
+        },
+        {
+          "id": "e1s13",
+          "type": "choice",
+          "bg": "classroom",
+          "setup": "你看了看陈静的方向。\n她好像感觉到了你的目光，微微抬起头。",
+          "choices": [
+            {
+              "text": "走过去，轻声说：\"你好，我是新同学。\"",
+              "next": "e1s14a",
+              "xp": 15,
+              "rel": { "chenjing": 15 },
+              "feedback": "她停顿了一下，然后轻轻点了点头。\n不多，但这已经是她的欢迎方式了。"
+            },
+            {
+              "text": "对她点了个头，算是打招呼。",
+              "next": "e1s14b",
+              "xp": 10,
+              "rel": { "chenjing": 8 },
+              "feedback": "她愣了一下，然后也点了点头。\n你们之间，有了一个小小的开始。"
+            },
+            {
+              "text": "算了，不打扰她了。",
+              "next": "e1s14c",
+              "xp": 5,
+              "rel": {},
+              "feedback": "尊重她的空间，也是一种友善。\n但也许，她心里其实在等人来打招呼。"
+            }
+          ]
+        },
+        {
+          "id": "e1s14a",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "陈静",
+          "text": "……你好。",
+          "next": "e1s15"
+        },
+        {
+          "id": "e1s14b",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "那个小小的点头，\n是你们之间的第一句无声的对话。",
+          "next": "e1s15"
+        },
+        {
+          "id": "e1s14c",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "你决定不打扰她。\n\n有些缘分，需要慢慢来。",
+          "next": "e1s15"
+        },
+        {
+          "id": "e1s15",
+          "type": "vocab_fill",
+          "bg": "classroom",
+          "speaker": "陈老师",
+          "before": "放学前，陈老师叫住赵宇：\n\"赵宇，",
+          "blank": "人缘",
+          "after": "再好，也不能影响课堂纪律。\n你给我留下来。\"",
+          "options": ["人缘", "成绩", "绰号", "口吻"],
+          "xp": 20,
+          "correct_next": "e1end",
+          "wrong_next": "e1end",
+          "correction": "人缘：与他人相处融洽的关系；受人喜爱和欢迎的程度。"
+        },
+        {
+          "id": "e1end",
+          "type": "episode_end",
+          "bg": "evening",
+          "text": "第一天就这样结束了。\n\n你认识了爱闹的赵宇，直率的小敏，\n还有安静的陈静。\n\n这个班，比你想象的，更有意思。",
+          "cliffhanger": "第二天早上，赵宇神秘地凑到你耳边，压低声音说：\n\n\"昨天放学后，有人来打听你的事。\n你不认识的人。\""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "冤枉！",
+      "vocabFocus": ["冤枉", "两肋插刀", "心虚", "哑口无言"],
+      "scenes": [
+        {
+          "id": "e2s1",
+          "type": "narration",
+          "bg": "morning",
+          "text": "第三天。\n\n陈老师走进教室，脸色比平时凝重。\n\n教室里的嗡嗡声，\n瞬间停了下来。",
+          "next": "e2s2"
+        },
+        {
+          "id": "e2s2",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "陈老师",
+          "text": "今天早上，有同学的钢笔不见了。\n那是一支很贵重的笔，是家长送的礼物。\n\n有没有人知道是怎么回事？",
+          "next": "e2s3"
+        },
+        {
+          "id": "e2s3",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "教室里一片沉默。\n\n老师的目光缓慢地扫过全班，\n最后，停在了赵宇身上。",
+          "next": "e2s4"
+        },
+        {
+          "id": "e2s4",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "陈老师",
+          "text": "赵宇，今天早上你最先到教室，\n我看到你在走廊徘徊。\n\n你能解释一下吗？",
+          "next": "e2s5"
+        },
+        {
+          "id": "e2s5",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "赵宇",
+          "text": "老师，我……我只是去倒水！\n我根本没有碰任何人的东西！",
+          "next": "e2s6"
+        },
+        {
+          "id": "e2s6",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "赵宇的声音有点急，但眼神很直接。\n\n你记起早上在走廊见到的事——\n赵宇的手里只有一个水杯。",
+          "next": "e2s7"
+        },
+        {
+          "id": "e2s7",
+          "type": "vocab_fill",
+          "bg": "classroom",
+          "speaker": null,
+          "before": "赵宇确实什么都没做，\n但他站在那里，\n所有人的眼神都让他觉得自己被",
+          "blank": "冤枉",
+          "after": "了。",
+          "options": ["冤枉", "惩罚", "推荐", "批评"],
+          "xp": 20,
+          "correct_next": "e2s8",
+          "wrong_next": "e2s8",
+          "correction": "冤枉：无辜地受到指责或惩罚；对没有做错事的人进行不公平的指控。"
+        },
+        {
+          "id": "e2s8",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "陈老师",
+          "text": "有没有人看到什么？\n\n如果有人知道真相，\n请站出来。",
+          "next": "e2s9"
+        },
+        {
+          "id": "e2s9",
+          "type": "choice",
+          "bg": "classroom",
+          "setup": "你握紧了拳头。\n\n你知道真相。\n你早上亲眼看到赵宇只是去倒水。",
+          "choices": [
+            {
+              "text": "举手站起来：\"老师，我可以证明。\"",
+              "next": "e2s10a",
+              "xp": 20,
+              "rel": { "zhaoyou": 20, "xiaomin": 10 },
+              "feedback": "教室里一下子静了。\n赵宇转头看向你，眼神里有什么东西在动。"
+            },
+            {
+              "text": "想举手，但又犹豫了，没动。",
+              "next": "e2s10b",
+              "xp": 5,
+              "rel": { "zhaoyou": -5 },
+              "feedback": "你把手放了下来。\n旁边的小敏侧头看了你一眼。"
+            }
+          ]
+        },
+        {
+          "id": "e2s10a",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "你",
+          "text": "老师，早上我看到赵宇在走廊，\n他手里只有一个水杯。\n\n他根本没有靠近任何人的书桌。",
+          "next": "e2s11"
+        },
+        {
+          "id": "e2s10b",
+          "type": "dialogue",
+          "bg": "corridor",
+          "speaker": "小敏",
+          "text": "你明明知道的。\n\n为什么不说？",
+          "next": "e2s11"
+        },
+        {
+          "id": "e2s11",
+          "type": "vocab_fill",
+          "bg": "classroom",
+          "speaker": "小敏",
+          "before": "小敏轻声说：\n\"不管怎样，你为他说话，\n就是为朋友",
+          "blank": "两肋插刀",
+          "after": "。\n有些人，一辈子都遇不到这样的朋友。\"",
+          "options": ["两肋插刀", "拔刀相助", "振振有词", "来者不拒"],
+          "xp": 20,
+          "correct_next": "e2s12",
+          "wrong_next": "e2s12",
+          "correction": "两肋插刀：比喻为了朋友甘愿承担极大的风险或牺牲，不惜一切地帮忙。"
+        },
+        {
+          "id": "e2s12",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "下午，真相大白了。\n\n钢笔其实是被碰落后，滚进了讲台下面的角落。\n\n是另一个同学不小心踢到了它，\n却没有说出口。",
+          "next": "e2s13"
+        },
+        {
+          "id": "e2s13",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "那个同学站在班级中央，\n眼神飘忽，不敢看任何人。",
+          "next": "e2s14"
+        },
+        {
+          "id": "e2s14",
+          "type": "vocab_fill",
+          "bg": "classroom",
+          "speaker": null,
+          "before": "他的脸涨得通红，\n明明什么话都没说，\n却让人一眼就看出他",
+          "blank": "心虚",
+          "after": "极了。",
+          "options": ["心虚", "骄傲", "直率", "痛快"],
+          "xp": 20,
+          "correct_next": "e2s15",
+          "wrong_next": "e2s15",
+          "correction": "心虚：内心不踏实，因为做了亏心事而感到不安、底气不足。"
+        },
+        {
+          "id": "e2s15",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "陈老师",
+          "text": "你为什么不早说？\n\n你让赵宇白白受了这半天的委屈，\n你知道吗？",
+          "next": "e2s16"
+        },
+        {
+          "id": "e2s16",
+          "type": "vocab_fill",
+          "bg": "classroom",
+          "speaker": null,
+          "before": "面对老师的问题，\n那个同学张了张嘴，\n却",
+          "blank": "哑口无言",
+          "after": "，再也找不到任何借口。",
+          "options": ["哑口无言", "振振有词", "鸦雀无声", "赌气"],
+          "xp": 20,
+          "correct_next": "e2s17",
+          "wrong_next": "e2s17",
+          "correction": "哑口无言：形容被说得无话可答，张口结舌，完全说不出话来。"
+        },
+        {
+          "id": "e2s17",
+          "type": "narration",
+          "bg": "corridor",
+          "text": "放学后，赵宇在走廊追上了你。\n\n他没有多说什么，\n只是用力地拍了拍你的肩膀。\n\n有些感谢，\n不需要用语言表达。",
+          "next": "e2end"
+        },
+        {
+          "id": "e2end",
+          "type": "episode_end",
+          "bg": "evening",
+          "text": "有时候，说一句真话\n比什么都难。\n\n但也比什么都重要。",
+          "cliffhanger": "那天傍晚，你的手机收到了一条陌生信息。\n\n发信人的名字，是陈静。\n\n信息只有一句话：\n\"谢谢你今天的事。\n我其实一直都看见的。\""
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "真正的朋友",
+      "vocabFocus": ["别扭", "得罪", "赌气", "持之以恒"],
+      "scenes": [
+        {
+          "id": "e3s1",
+          "type": "narration",
+          "bg": "morning",
+          "text": "两周过去了。\n\n你在立化中学渐渐找到了节奏，\n成绩不错，也慢慢认识了一些人。\n\n唯一的问题，是——小敏。",
+          "next": "e3s2"
+        },
+        {
+          "id": "e3s2",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "上周，你无意间说了一句：\n\"小敏说话有时候太直接了，\n会让人不舒服。\"\n\n你以为只有赵宇听到了。\n\n你以为错了。",
+          "next": "e3s3"
+        },
+        {
+          "id": "e3s3",
+          "type": "vocab_fill",
+          "bg": "classroom",
+          "speaker": null,
+          "before": "从那天起，你和小敏之间就有点",
+          "blank": "别扭",
+          "after": "了——\n说话不自然，笑容也勉强，\n像是空气里多了一层看不见的隔阂。",
+          "options": ["别扭", "激烈", "冲突", "直率"],
+          "xp": 20,
+          "correct_next": "e3s4",
+          "wrong_next": "e3s4",
+          "correction": "别扭：形容言行不顺畅、不自然，或心里有隔阂、感到不舒服。"
+        },
+        {
+          "id": "e3s4",
+          "type": "dialogue",
+          "bg": "corridor",
+          "speaker": "赵宇",
+          "text": "我去帮你跟小敏说！\n我最擅长调解了，\n上次帮隔壁班两个人，\n十分钟就和好了！",
+          "next": "e3s5"
+        },
+        {
+          "id": "e3s5",
+          "type": "choice",
+          "bg": "corridor",
+          "setup": "你看着赵宇充满自信的表情，\n有点犹豫。",
+          "choices": [
+            {
+              "text": "\"好吧，谢谢你，帮我试试。\"",
+              "next": "e3s6",
+              "xp": 10,
+              "rel": { "zhaoyou": 5 },
+              "feedback": "赵宇兴致勃勃地冲了过去。\n你在原地等着，心里有点忐忑。"
+            },
+            {
+              "text": "\"算了，我自己去说。\"",
+              "next": "e3s6",
+              "xp": 15,
+              "rel": { "xiaomin": 5 },
+              "feedback": "你觉得这件事，还是自己来比较好。\n但还没走出两步，赵宇已经跑过去了。"
+            }
+          ]
+        },
+        {
+          "id": "e3s6",
+          "type": "narration",
+          "bg": "corridor",
+          "text": "三分钟后，赵宇回来了。\n\n他的表情，有点微妙。",
+          "next": "e3s7"
+        },
+        {
+          "id": "e3s7",
+          "type": "dialogue",
+          "bg": "corridor",
+          "speaker": "赵宇",
+          "text": "呃……我好像说错话了。\n\n我跟她说你觉得她太直接，\n有时候说话像刀子一样……\n\n她现在更不高兴了。",
+          "next": "e3s8"
+        },
+        {
+          "id": "e3s8",
+          "type": "vocab_fill",
+          "bg": "corridor",
+          "speaker": null,
+          "before": "赵宇好心帮忙，\n却不小心",
+          "blank": "得罪",
+          "after": "了小敏，\n把事情搞得更复杂了。",
+          "options": ["得罪", "冤枉", "讥讽", "批评"],
+          "xp": 20,
+          "correct_next": "e3s9",
+          "wrong_next": "e3s9",
+          "correction": "得罪：因言语或行为不当而使别人不高兴，触怒或冒犯他人。"
+        },
+        {
+          "id": "e3s9",
+          "type": "narration",
+          "bg": "classroom",
+          "text": "当天放学，小敏没有等任何人，\n一个人收拾书包，\n默默走出了教室。",
+          "next": "e3s10"
+        },
+        {
+          "id": "e3s10",
+          "type": "vocab_fill",
+          "bg": "classroom",
+          "speaker": null,
+          "before": "她",
+          "blank": "赌气",
+          "after": "地离开，连\"再见\"都没说。\n\n你站在原地，看着她的背影，\n不知道该怎么办。",
+          "options": ["赌气", "痛快", "兴致勃勃", "直率"],
+          "xp": 20,
+          "correct_next": "e3s11",
+          "wrong_next": "e3s11",
+          "correction": "赌气：因生气而故意做某事来发泄情绪，意气用事，不理性地行动。"
+        },
+        {
+          "id": "e3s11",
+          "type": "narration",
+          "bg": "evening",
+          "text": "你想起小敏第一天帮你介绍班上的人，\n想起她直率但善意的每一句话。\n\n她其实是第一个对你好的人。",
+          "next": "e3s12"
+        },
+        {
+          "id": "e3s12",
+          "type": "choice",
+          "bg": "evening",
+          "setup": "你决定修复这段关系。\n但怎么开始？",
+          "choices": [
+            {
+              "text": "今天写一张道歉纸条，明天放在她的桌上。",
+              "next": "e3s13",
+              "xp": 15,
+              "rel": { "xiaomin": 15 },
+              "feedback": "你想了很久，\n写了又删，删了又写。\n最后只留下最真实的几个字。"
+            },
+            {
+              "text": "明天直接走过去，当面道歉。",
+              "next": "e3s13",
+              "xp": 20,
+              "rel": { "xiaomin": 20 },
+              "feedback": "当面说出口，\n比写在纸上更难，也更真诚。\n你决定明天鼓起勇气。"
+            },
+            {
+              "text": "先等她冷静下来，再找机会。",
+              "next": "e3s13",
+              "xp": 5,
+              "rel": { "xiaomin": 5 },
+              "feedback": "给她一点时间，\n也给自己一点时间想清楚。"
+            }
+          ]
+        },
+        {
+          "id": "e3s13",
+          "type": "vocab_fill",
+          "bg": "morning",
+          "speaker": null,
+          "before": "修复一段友谊，\n需要",
+          "blank": "持之以恒",
+          "after": "的努力。\n\n不能因为一次尝试失败就放弃，\n不能今天道歉，明天又忘了。",
+          "options": ["持之以恒", "来者不拒", "兴致勃勃", "小事一桩"],
+          "xp": 20,
+          "correct_next": "e3s14",
+          "wrong_next": "e3s14",
+          "correction": "持之以恒：长久坚持下去，不中途放弃，始终如一地努力。"
+        },
+        {
+          "id": "e3s14",
+          "type": "dialogue",
+          "bg": "classroom",
+          "speaker": "小敏",
+          "text": "……我知道你不是故意的。\n\n其实，我那天也反应过激了。\n\n直率的人有时候，\n忘了别人说话不是一样直接的。",
+          "next": "e3s15"
+        },
+        {
+          "id": "e3s15",
+          "type": "narration",
+          "bg": "outdoor",
+          "text": "那天放学，\n你、小敏和赵宇三个人一起走出学校大门。\n\n走了没几步，后面传来脚步声。\n\n是陈静。\n\n她低着头，但走的方向，\n和你们一样。",
+          "next": "e3end"
+        },
+        {
+          "id": "e3end",
+          "type": "episode_end",
+          "bg": "sunset",
+          "text": "真正的朋友，\n不是一开始就完美的那种。\n\n是吵过架，\n误解过，\n说过错的话，\n然后还是选择留下来的人。\n\n这就是你在立化中学的\n第一批朋友。",
+          "cliffhanger": "第一学期的故事，只是开始。\n\n下学期，将会有更多新鲜事。\n\n【第二季 ——「侦探篇」· 即将开放】"
+        }
+      ]
+    }
+  ]
+}

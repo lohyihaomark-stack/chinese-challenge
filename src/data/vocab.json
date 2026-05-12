@@ -1,0 +1,401 @@
+[
+  {
+    "id": 1,
+    "hanzi": "魅力",
+    "pinyin": "mèi lì",
+    "english": "charm; charisma; allure",
+    "sentence": "新加坡独特的___在于它能将多元文化和谐地融为一体。"
+  },
+  {
+    "id": 2,
+    "hanzi": "悠久",
+    "pinyin": "yōu jiǔ",
+    "english": "long-standing; ancient; time-honoured",
+    "sentence": "牛车水有着___的历史，许多建筑至今保存完好。"
+  },
+  {
+    "id": 3,
+    "hanzi": "遗产",
+    "pinyin": "yí chǎn",
+    "english": "heritage; legacy; inheritance",
+    "sentence": "新加坡将峇峇娘惹文化列为珍贵的非物质文化___。"
+  },
+  {
+    "id": 4,
+    "hanzi": "巴刹",
+    "pinyin": "bā shā",
+    "english": "wet market (from Malay 'pasar')",
+    "sentence": "每天清晨，阿婆都会去附近的___买新鲜蔬菜和鱼肉。"
+  },
+  {
+    "id": 5,
+    "hanzi": "饱经风霜",
+    "pinyin": "bǎo jīng fēng shuāng",
+    "english": "weather-beaten; having endured many hardships",
+    "sentence": "这座___的老店屋见证了新加坡百年的沧桑变迁。"
+  },
+  {
+    "id": 6,
+    "hanzi": "同胞",
+    "pinyin": "tóng bāo",
+    "english": "fellow countrymen; compatriots",
+    "sentence": "农历新年期间，全岛的华族___共同庆祝这个传统佳节。"
+  },
+  {
+    "id": 7,
+    "hanzi": "融合",
+    "pinyin": "róng hé",
+    "english": "fusion; integration; to blend together",
+    "sentence": "叻沙是马来与华族饮食文化___的最佳体现。"
+  },
+  {
+    "id": 8,
+    "hanzi": "浓郁",
+    "pinyin": "nóng yù",
+    "english": "rich; strong; full-bodied (flavour or culture)",
+    "sentence": "这碗正宗的咖喱散发出___的香气，令人垂涎三尺。"
+  },
+  {
+    "id": 9,
+    "hanzi": "皇宫",
+    "pinyin": "huáng gōng",
+    "english": "imperial palace; royal palace",
+    "sentence": "参观泰国大___时，游客须穿着整洁的服装以示尊重。"
+  },
+  {
+    "id": 10,
+    "hanzi": "城堡",
+    "pinyin": "chéng bǎo",
+    "english": "castle; fortress",
+    "sentence": "圣淘沙的沙滩上，孩子们用沙子堆起了一座美丽的___。"
+  },
+  {
+    "id": 11,
+    "hanzi": "时尚",
+    "pinyin": "shí shàng",
+    "english": "fashionable; trendy; in vogue",
+    "sentence": "乌节路是新加坡最___的购物街道，汇集了众多国际品牌。"
+  },
+  {
+    "id": 12,
+    "hanzi": "彩绘",
+    "pinyin": "cǎi huì",
+    "english": "colourful painting; mural; decorative artwork",
+    "sentence": "哈芝巷的墙壁上布满了色彩鲜艳的___，吸引许多游客前来拍照。"
+  },
+  {
+    "id": 13,
+    "hanzi": "探索",
+    "pinyin": "tàn suǒ",
+    "english": "to explore; to investigate; to probe",
+    "sentence": "我们利用周末___了新加坡河畔一带的历史建筑群。"
+  },
+  {
+    "id": 14,
+    "hanzi": "娘惹",
+    "pinyin": "niáng rě",
+    "english": "Nyonya; Peranakan woman (Straits-born Chinese female)",
+    "sentence": "___糕点以其精致的外观和独特的风味闻名于世。"
+  },
+  {
+    "id": 15,
+    "hanzi": "拍摄",
+    "pinyin": "pāi shè",
+    "english": "to photograph; to film; to shoot",
+    "sentence": "游客们纷纷在滨海湾金沙酒店前___留念。"
+  },
+  {
+    "id": 16,
+    "hanzi": "文明",
+    "pinyin": "wén míng",
+    "english": "civilisation; civilised; culture",
+    "sentence": "新加坡以其高度的___程度和整洁的城市环境闻名于世。"
+  },
+  {
+    "id": 17,
+    "hanzi": "品尝",
+    "pinyin": "pǐn cháng",
+    "english": "to taste; to savour; to sample",
+    "sentence": "到新加坡一定要___地道的海南鸡饭和辣椒螃蟹。"
+  },
+  {
+    "id": 18,
+    "hanzi": "安详",
+    "pinyin": "ān xiáng",
+    "english": "serene; peaceful; calm and composed",
+    "sentence": "清晨的新加坡植物园显得格外___，老人们悠然漫步其中。"
+  },
+  {
+    "id": 19,
+    "hanzi": "休闲",
+    "pinyin": "xiū xián",
+    "english": "leisure; relaxation; recreational",
+    "sentence": "每逢周末，新加坡人喜欢到东海岸公园进行___活动。"
+  },
+  {
+    "id": 20,
+    "hanzi": "镶嵌",
+    "pinyin": "xiāng qiàn",
+    "english": "to inlay; to embed; to set (jewels or tiles)",
+    "sentence": "娘惹瓷砖上___着精美的花卉图案，色彩绚丽夺目。"
+  },
+  {
+    "id": 21,
+    "hanzi": "横梁",
+    "pinyin": "héng liáng",
+    "english": "crossbeam; horizontal beam; rafter",
+    "sentence": "这座老式店屋的___上雕刻着精美的龙凤图案。"
+  },
+  {
+    "id": 22,
+    "hanzi": "玻璃",
+    "pinyin": "bō lí",
+    "english": "glass (material)",
+    "sentence": "滨海湾花穹巨大的___穹顶在阳光下闪闪发光。"
+  },
+  {
+    "id": 23,
+    "hanzi": "循环",
+    "pinyin": "xún huán",
+    "english": "cycle; circulation; to recycle",
+    "sentence": "新加坡积极推广___经济，鼓励市民减少资源浪费。"
+  },
+  {
+    "id": 24,
+    "hanzi": "映衬",
+    "pinyin": "yìng chèn",
+    "english": "to set off; to highlight; to complement",
+    "sentence": "夜幕下，霓虹灯光与新加坡河面相互___，美不胜收。"
+  },
+  {
+    "id": 25,
+    "hanzi": "谷",
+    "pinyin": "gǔ",
+    "english": "valley; gorge; grain",
+    "sentence": "硅___是全球科技产业的重镇，吸引了无数企业和人才入驻。"
+  },
+  {
+    "id": 26,
+    "hanzi": "盎然",
+    "pinyin": "àng rán",
+    "english": "exuberant; full of; brimming with (life or spirit)",
+    "sentence": "新加坡植物园里绿意___，各种热带植物争奇斗艳。"
+  },
+  {
+    "id": 27,
+    "hanzi": "株",
+    "pinyin": "zhū",
+    "english": "(measure word for plants); stump; plant",
+    "sentence": "园丁在公园入口处种下了两___高大的雨树，为行人遮阴。"
+  },
+  {
+    "id": 28,
+    "hanzi": "松懈",
+    "pinyin": "sōng xiè",
+    "english": "to relax; to slack off; lax; negligent",
+    "sentence": "在最后的备考阶段，同学们绝不能___，要坚持努力到底。"
+  },
+  {
+    "id": 29,
+    "hanzi": "领略",
+    "pinyin": "lǐng lüè",
+    "english": "to appreciate; to experience; to savour",
+    "sentence": "游览新加坡国立博物馆，可以___本地丰富的历史与文化。"
+  },
+  {
+    "id": 30,
+    "hanzi": "设施",
+    "pinyin": "shè shī",
+    "english": "facilities; infrastructure; installations",
+    "sentence": "新加坡的公共___十分完善，地铁网络覆盖全岛各个角落。"
+  },
+  {
+    "id": 31,
+    "hanzi": "别具一格",
+    "pinyin": "bié jù yī gé",
+    "english": "unique in style; one of a kind; distinctive",
+    "sentence": "这家咖啡馆将殖民地建筑与现代设计巧妙融合，___。"
+  },
+  {
+    "id": 32,
+    "hanzi": "主题",
+    "pinyin": "zhǔ tí",
+    "english": "theme; topic; subject",
+    "sentence": "圣淘沙名胜世界的___公园每年吸引数百万游客前来游玩。"
+  },
+  {
+    "id": 33,
+    "hanzi": "殖民地",
+    "pinyin": "zhí mín dì",
+    "english": "colony; colonial territory",
+    "sentence": "新加坡曾是英国的___，独立前历经了漫长的历史变迁。"
+  },
+  {
+    "id": 34,
+    "hanzi": "投降",
+    "pinyin": "tóu xiáng",
+    "english": "to surrender; to capitulate",
+    "sentence": "1945年，日本正式___，结束了在新加坡三年多的军事占领。"
+  },
+  {
+    "id": 35,
+    "hanzi": "棕色",
+    "pinyin": "zōng sè",
+    "english": "brown; brownish colour",
+    "sentence": "老式店屋的___木门经过岁月的洗礼，显得古朴而典雅。"
+  },
+  {
+    "id": 36,
+    "hanzi": "氧化",
+    "pinyin": "yǎng huà",
+    "english": "oxidation; to oxidise; to rust",
+    "sentence": "铁栏杆因长期暴露在潮湿环境中而发生___，变成红褐色。"
+  },
+  {
+    "id": 37,
+    "hanzi": "里程碑",
+    "pinyin": "lǐ chéng bēi",
+    "english": "milestone; landmark achievement",
+    "sentence": "1965年8月9日是新加坡建国史上最重要的___。"
+  },
+  {
+    "id": 38,
+    "hanzi": "尤其",
+    "pinyin": "yóu qí",
+    "english": "especially; particularly; above all",
+    "sentence": "新加坡的美食享誉全球，___是辣椒螃蟹和肉骨茶。"
+  },
+  {
+    "id": 39,
+    "hanzi": "发掘",
+    "pinyin": "fā jué",
+    "english": "to excavate; to unearth; to discover",
+    "sentence": "考古学家在福康宁山___了许多14世纪的珍贵历史文物。"
+  },
+  {
+    "id": 40,
+    "hanzi": "面积",
+    "pinyin": "miàn jī",
+    "english": "area; surface area; square measure",
+    "sentence": "新加坡的国土___不足一千平方公里，却是全球最繁荣的城市之一。"
+  },
+  {
+    "id": 41,
+    "hanzi": "举世无双",
+    "pinyin": "jǔ shì wú shuāng",
+    "english": "unparalleled in the world; matchless; peerless",
+    "sentence": "新加坡花园城市的美誉可谓___，令全球各地游客叹为观止。"
+  },
+  {
+    "id": 42,
+    "hanzi": "举足轻重",
+    "pinyin": "jǔ zú qīng zhòng",
+    "english": "of great importance; influential; to carry weight",
+    "sentence": "新加坡港口在全球贸易体系中占有___的地位。"
+  },
+  {
+    "id": 43,
+    "hanzi": "擅长",
+    "pinyin": "shàn cháng",
+    "english": "to be good at; to excel in; to specialise in",
+    "sentence": "李师傅___烹饪各种娘惹美食，常在佳节为邻居烹制拿手菜。"
+  },
+  {
+    "id": 44,
+    "hanzi": "紧凑",
+    "pinyin": "jǐn còu",
+    "english": "compact; tight; well-organised",
+    "sentence": "由于土地有限，新加坡的城市规划十分___，空间利用率极高。"
+  },
+  {
+    "id": 45,
+    "hanzi": "打道回府",
+    "pinyin": "dǎ dào huí fǔ",
+    "english": "to head back home; to call it a day and return",
+    "sentence": "游览了一整天的牛车水后，大家都累了，决定___。"
+  },
+  {
+    "id": 46,
+    "hanzi": "杂技",
+    "pinyin": "zá jì",
+    "english": "acrobatics; acrobatic performance",
+    "sentence": "农历新年庙会上，___表演者展示了令人叹为观止的高难度动作。"
+  },
+  {
+    "id": 47,
+    "hanzi": "甩",
+    "pinyin": "shuǎi",
+    "english": "to fling; to swing; to throw off",
+    "sentence": "拉面师傅将面团用力___开，制作出劲道十足的手拉面。"
+  },
+  {
+    "id": 48,
+    "hanzi": "薄",
+    "pinyin": "báo",
+    "english": "thin; light; flimsy; (of flavour) mild",
+    "sentence": "娘惹饼干做得极___，入口即化，香甜可口。"
+  },
+  {
+    "id": 49,
+    "hanzi": "不偏不倚",
+    "pinyin": "bù piān bù yǐ",
+    "english": "impartial; unbiased; perfectly balanced",
+    "sentence": "法官在审判时必须___，公平公正地对待每一位当事人。"
+  },
+  {
+    "id": 50,
+    "hanzi": "咖喱",
+    "pinyin": "gā lí",
+    "english": "curry",
+    "sentence": "新加坡的___鱼头是深受本地人喜爱的传统美食。"
+  },
+  {
+    "id": 51,
+    "hanzi": "沾",
+    "pinyin": "zhān",
+    "english": "to dip; to touch; to be stained with",
+    "sentence": "吃沙爹时，要将肉串___上浓郁的花生酱，味道才更佳。"
+  },
+  {
+    "id": 52,
+    "hanzi": "泡沫",
+    "pinyin": "pào mò",
+    "english": "foam; froth; bubble",
+    "sentence": "拉茶师傅将茶水从高处倒下，产生了丰富细腻的___。"
+  },
+  {
+    "id": 53,
+    "hanzi": "赞不绝口",
+    "pinyin": "zàn bù jué kǒu",
+    "english": "full of praise; to can't stop praising",
+    "sentence": "食客们品尝过这家老字号的海南鸡饭后，无不___。"
+  },
+  {
+    "id": 54,
+    "hanzi": "聚精会神",
+    "pinyin": "jù jīng huì shén",
+    "english": "to concentrate; to focus one's attention; attentive",
+    "sentence": "华文考试时，同学们___地答题，不放过任何一道题目。"
+  },
+  {
+    "id": 55,
+    "hanzi": "卖弄",
+    "pinyin": "mài nòng",
+    "english": "to show off; to flaunt; to parade",
+    "sentence": "他总喜欢在朋友面前___自己的语言能力，令人感到不自在。"
+  },
+  {
+    "id": 56,
+    "hanzi": "地道",
+    "pinyin": "dì dào",
+    "english": "authentic; genuine; true to original",
+    "sentence": "这家餐厅的肉骨茶做法___，完全按照传统配方慢火熬制。"
+  },
+  {
+    "id": 57,
+    "hanzi": "即便",
+    "pinyin": "jí biàn",
+    "english": "even if; even though; regardless of whether",
+    "sentence": "___天气炎热，新加坡人也会出门寻觅美食，绝不懈怠。"
+  }
+]
