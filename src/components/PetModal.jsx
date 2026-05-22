@@ -1,225 +1,115 @@
 import { useState } from 'react'
-import { getSession, buyItem, equipItem, unequipItem, saveCharacterGender } from '../utils/userStore'
-import { SHOP_ITEMS, findCharItem } from '../utils/shopData'
+import { getSession, buyPetItem, equipPetItem, getLevelInfo, renamePet } from '../utils/userStore'
+import { PET_SHOP_ITEMS, findPetItem, getPetItemCategory } from '../utils/petShopData'
+import PetCreature, { PET_STAGES, getStage, getPetStageInfo } from './PetCreature'
 
 /* ══════════════════════════════════════════════════════════
-   Character figure — CSS-drawn chibi character
+   RARITY HELPER
    ══════════════════════════════════════════════════════════ */
-function CharacterFigure({ character, sc = 1 }) {
-  const S = (n) => Math.round(n * sc)
-
-  const hair = findCharItem('hair',      character?.hair)
-  const top  = findCharItem('top',       character?.top)
-  const bot  = findCharItem('bottom',    character?.bottom)
-  const shoe = findCharItem('shoes',     character?.shoes)
-  const acc  = findCharItem('accessory', character?.accessory)
-
-  const hc  = hair?.color || '#1C1C1E'
-  const tc  = top?.color  || '#BFDBFE'
-  const bc  = bot?.color  || '#1E3A8A'
-  const sc2 = shoe?.color || '#F3F4F6'
-  const isSk   = bot?.isSkirt  || false
-  const accType = acc?.type || 'none'
-  const skin = '#F5CBA7'
-
-  const hasCrown   = accType === 'crown'
-  const hasCap     = accType === 'cap'
-  const hasBow     = accType === 'bow'
-  const hasGlasses = accType === 'glasses'
-  const hasScarf   = accType === 'scarf'
-  const hasBag     = accType === 'bag'
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
-
-      {/* Crown / Cap — floats above hair */}
-      <div style={{ height: S(22), display: 'flex', alignItems: 'flex-end', justifyContent: 'center', fontSize: S(19) }}>
-        {hasCrown && <span>👑</span>}
-        {hasCap   && <span>🧢</span>}
-      </div>
-
-      {/* Hair dome + head group */}
-      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-
-        {/* Hair dome */}
-        <div style={{
-          width: S(46), height: S(22),
-          backgroundColor: hc,
-          borderRadius: `${S(23)}px ${S(23)}px 0 0`,
-          position: 'relative', zIndex: 2,
-        }}>
-          {hasBow && (
-            <span style={{
-              position: 'absolute', right: S(-14), top: 0,
-              fontSize: S(15), lineHeight: 1,
-            }}>🎀</span>
-          )}
-        </div>
-
-        {/* Head */}
-        <div style={{
-          width: S(46), height: S(46),
-          backgroundColor: skin,
-          borderRadius: '50%',
-          marginTop: S(-4),
-          zIndex: 1,
-          position: 'relative',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          {/* Glasses overlay */}
-          {hasGlasses && (
-            <div style={{
-              position: 'absolute', top: S(13),
-              display: 'flex', alignItems: 'center', gap: S(2), zIndex: 4,
-            }}>
-              <div style={{ width: S(15), height: S(11), borderRadius: S(4), border: `${S(1.5)}px solid #374151` }} />
-              <div style={{ width: S(3), height: S(1.5), backgroundColor: '#374151' }} />
-              <div style={{ width: S(15), height: S(11), borderRadius: S(4), border: `${S(1.5)}px solid #374151` }} />
-            </div>
-          )}
-          {/* Eyes */}
-          <div style={{ display: 'flex', gap: S(10), marginTop: S(6) }}>
-            <div style={{ width: S(5), height: S(5), backgroundColor: '#111', borderRadius: '50%' }} />
-            <div style={{ width: S(5), height: S(5), backgroundColor: '#111', borderRadius: '50%' }} />
-          </div>
-          {/* Smile */}
-          <div style={{
-            width: S(14), height: S(6),
-            borderBottom: `${S(2)}px solid #92400E`,
-            borderLeft:   `${S(1)}px solid #92400E`,
-            borderRight:  `${S(1)}px solid #92400E`,
-            borderRadius: '0 0 50% 50%',
-            marginTop: S(3),
-          }} />
-          {/* Hair side strands */}
-          <div style={{ position: 'absolute', left: S(-2), top: S(18), width: S(8), height: S(14), backgroundColor: hc, borderRadius: `0 0 ${S(4)}px ${S(4)}px` }} />
-          <div style={{ position: 'absolute', right: S(-2), top: S(18), width: S(8), height: S(14), backgroundColor: hc, borderRadius: `0 0 ${S(4)}px ${S(4)}px` }} />
-        </div>
-      </div>
-
-      {/* Scarf or Neck */}
-      {hasScarf ? (
-        <div style={{
-          width: S(36), height: S(9),
-          backgroundColor: '#EF4444',
-          borderRadius: S(5), zIndex: 3,
-        }} />
-      ) : (
-        <div style={{ width: S(12), height: S(7), backgroundColor: skin }} />
-      )}
-
-      {/* Arms + Body */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
-        {/* Left arm */}
-        <div style={{
-          width: S(10), height: S(32), backgroundColor: tc,
-          borderRadius: `${S(5)}px 0 ${S(5)}px ${S(5)}px`,
-          marginTop: S(4),
-        }} />
-        {/* Body */}
-        <div style={{ width: S(30), height: S(36), backgroundColor: tc, position: 'relative' }}>
-          {/* Collar detail */}
-          <div style={{
-            position: 'absolute', top: 0, left: '20%', right: '20%', height: S(8),
-            borderBottom: `${S(1)}px solid rgba(0,0,0,0.12)`,
-          }} />
-        </div>
-        {/* Right arm */}
-        <div style={{
-          width: S(10), height: S(32), backgroundColor: tc,
-          borderRadius: `0 ${S(5)}px ${S(5)}px ${S(5)}px`,
-          marginTop: S(4),
-        }} />
-        {/* Bag */}
-        {hasBag && (
-          <span style={{ position: 'absolute', right: S(-20), top: S(4), fontSize: S(16) }}>🎒</span>
-        )}
-      </div>
-
-      {/* Bottom — skirt or pants */}
-      {isSk ? (
-        <div style={{
-          width: S(44), height: S(26), backgroundColor: bc,
-          clipPath: 'polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%)',
-        }} />
-      ) : (
-        <div style={{ display: 'flex', gap: S(2) }}>
-          <div style={{ width: S(14), height: S(28), backgroundColor: bc, borderRadius: `0 0 ${S(4)}px ${S(4)}px` }} />
-          <div style={{ width: S(14), height: S(28), backgroundColor: bc, borderRadius: `0 0 ${S(4)}px ${S(4)}px` }} />
-        </div>
-      )}
-
-      {/* Shoes */}
-      <div style={{ display: 'flex', gap: isSk ? S(10) : S(2), marginTop: S(1) }}>
-        <div style={{ width: S(17), height: S(8), backgroundColor: sc2, borderRadius: S(4), border: '1px solid rgba(0,0,0,0.14)' }} />
-        <div style={{ width: S(17), height: S(8), backgroundColor: sc2, borderRadius: S(4), border: '1px solid rgba(0,0,0,0.14)' }} />
-      </div>
-    </div>
-  )
+function getRarity(price) {
+  if (price === 0)    return { color: '#9CA3AF', glow: 'rgba(156,163,175,0.25)', label: '' }
+  if (price < 150)    return { color: '#00d4ff', glow: 'rgba(0,212,255,0.35)',   label: '✦' }
+  if (price < 300)    return { color: '#c084fc', glow: 'rgba(192,132,252,0.45)', label: '✦✦' }
+  if (price < 500)    return { color: '#ffd60a', glow: 'rgba(255,214,10,0.55)',  label: '✦✦✦' }
+  return               { color: '#f72585', glow: 'rgba(247,37,133,0.6)',          label: '✦✦✦✦' }
 }
 
 /* ══════════════════════════════════════════════════════════
-   Shop item card
+   SHOP ITEM CARD  (larger fonts)
    ══════════════════════════════════════════════════════════ */
-function ShopItem({ item, slot, owned, equipped, coins, onBuy, onEquip }) {
+function PetShopItem({ item, owned, equipped, coins, onBuy, onEquip }) {
   const canAfford = coins >= item.price
   const isFree    = item.price === 0
+  const rar       = getRarity(item.price)
 
-  // Visual swatch
-  let swatch
-  if (slot === 'accessory') {
-    swatch = (
-      <div className="w-14 h-14 rounded-xl flex items-center justify-center text-4xl border-2 border-brick/10 bg-cream-dark">
-        {item.emoji}
-      </div>
-    )
-  } else {
-    // color circle/square based on slot
-    const isHair = slot === 'hair'
-    swatch = (
-      <div
-        className="w-14 h-14 border-2 border-brick/10 shadow-sm"
-        style={{
-          backgroundColor: item.color,
-          borderRadius: isHair ? '50%' : '0.75rem',
-        }}
-      />
-    )
-  }
+  const borderCol = equipped
+    ? rar.color
+    : owned || isFree
+      ? `${rar.color}66`
+      : 'rgba(0,212,255,0.12)'
+
+  const bgCol = equipped
+    ? `${rar.color}18`
+    : 'rgba(12,24,48,0.7)'
 
   return (
-    <div className={`rounded-xl border-2 p-3 flex flex-col items-center gap-2 transition-all ${
-      equipped
-        ? 'border-nanyang-teal bg-nanyang-teal/8'
-        : owned
-          ? 'border-gold/50 bg-gold/5'
-          : 'border-brick-mid/20 bg-cream'
-    }`}>
-      {swatch}
-      <p className="text-brick font-bold text-sm text-center leading-tight">{item.name}</p>
-
-      {equipped ? (
-        <div className="w-full text-center text-sm py-1.5 rounded-lg bg-nanyang-teal text-cream font-bold">
-          已装备 ✓
+    <div
+      className="rounded-xl p-2.5 flex flex-col items-center gap-1.5 transition-all relative overflow-hidden"
+      style={{
+        border: `2px solid ${borderCol}`,
+        background: bgCol,
+        boxShadow: equipped ? `0 0 14px ${rar.glow}, inset 0 0 8px ${rar.color}18` : undefined,
+      }}
+    >
+      {/* Rarity badge */}
+      {rar.label && (
+        <div style={{
+          position: 'absolute', top: 4, right: 5,
+          fontSize: '13px', fontWeight: 'bold', lineHeight: 1,
+          color: rar.color, textShadow: `0 0 5px ${rar.color}`,
+        }}>
+          {rar.label}
         </div>
+      )}
+
+      {/* Emoji tile */}
+      <div className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl"
+           style={{
+             background: equipped ? `${rar.color}22` : 'rgba(0,212,255,0.06)',
+             border: `1px solid ${rar.color}33`,
+           }}>
+        {item.emoji}
+      </div>
+
+      <p style={{ fontWeight: 900, fontSize: '19px', textAlign: 'center', lineHeight: 1.2, color: equipped ? rar.color : '#a8d8f0' }}>
+        {item.name}
+      </p>
+      <p style={{ fontSize: '15px', textAlign: 'center', lineHeight: 1.4, opacity: 0.75, color: '#a8d8f0' }}>
+        {item.desc}
+      </p>
+
+      {/* Action button */}
+      {equipped ? (
+        <button
+          onClick={onEquip}
+          style={{
+            width: '100%', textAlign: 'center', fontSize: '17px', padding: '7px 0',
+            borderRadius: 8, fontWeight: 900, color: 'white',
+            background: rar.color, boxShadow: `0 2px 8px ${rar.glow}`,
+            border: 'none', cursor: 'pointer',
+          }}
+        >
+          已装备 ✓
+        </button>
       ) : (owned || isFree) ? (
         <button
           onClick={onEquip}
-          className="w-full text-sm py-1.5 rounded-lg bg-gold/20 text-brick font-bold hover:bg-gold/40 transition-colors"
+          style={{
+            width: '100%', fontSize: '17px', padding: '7px 0',
+            borderRadius: 8, fontWeight: 700, cursor: 'pointer',
+            background: `${rar.color}22`, color: rar.color, border: `1px solid ${rar.color}55`,
+            transition: 'opacity 0.2s',
+          }}
         >
-          装备
+          装　备
         </button>
       ) : (
         <button
           onClick={() => canAfford && onBuy()}
-          className={`w-full text-sm py-1.5 rounded-lg font-bold transition-colors ${
-            canAfford
-              ? 'bg-brick text-cream hover:bg-brick-mid'
-              : 'bg-brick/20 text-brick/40 cursor-not-allowed'
-          }`}
+          disabled={!canAfford}
+          style={{
+            width: '100%', fontSize: '17px', padding: '7px 0',
+            borderRadius: 8, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+            cursor: canAfford ? 'pointer' : 'not-allowed',
+            background: canAfford ? rar.color : 'rgba(0,212,255,0.06)',
+            color: canAfford ? 'white' : 'rgba(168,216,240,0.35)',
+            border: 'none',
+            transition: 'opacity 0.2s',
+          }}
         >
-          {item.price} 🪙
+          {!canAfford && <span>🔒</span>}
+          <span>{item.price} 🪙</span>
         </button>
       )}
     </div>
@@ -227,198 +117,355 @@ function ShopItem({ item, slot, owned, equipped, coins, onBuy, onEquip }) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   Gender picker screen
+   EVOLUTION STAGE TRACKER
    ══════════════════════════════════════════════════════════ */
-function GenderPicker({ onPick, onClose }) {
-  const boyPreview  = { gender: 'boy',  hair: 'hair_black', top: 'top_uniform', bottom: 'bottom_uniform_boy',  shoes: 'shoes_white', accessory: 'acc_none' }
-  const girlPreview = { gender: 'girl', hair: 'hair_black', top: 'top_uniform', bottom: 'bottom_uniform_girl', shoes: 'shoes_white', accessory: 'acc_none' }
+function StageTracker({ level }) {
+  const currentStage = getStage(level)
 
   return (
-    <div className="bg-cream w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
-      {/* Header */}
-      <div className="nanyang-header px-5 py-4 flex items-center justify-between shrink-0">
-        <p className="relative z-10 text-cream font-black text-2xl">选择你的形象</p>
-        <button onClick={onClose} className="relative z-10 text-cream/70 hover:text-cream text-4xl leading-none">×</button>
-      </div>
-
-      <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6">
-        <p className="text-brick/60 text-base text-center">你好！先选一个形象，之后可以在商店换装。</p>
-
-        <div className="flex gap-6 justify-center w-full">
-          {/* Boy */}
-          <button
-            onClick={() => onPick('boy')}
-            className="flex-1 max-w-[160px] flex flex-col items-center gap-3 bg-cream-dark hover:bg-gold/15 border-2 border-transparent hover:border-gold rounded-2xl py-6 px-4 transition-all active:scale-95"
-          >
-            <CharacterFigure character={boyPreview} sc={0.9} />
-            <span className="text-brick font-black text-xl mt-1">男生 👦</span>
-          </button>
-
-          {/* Girl */}
-          <button
-            onClick={() => onPick('girl')}
-            className="flex-1 max-w-[160px] flex flex-col items-center gap-3 bg-cream-dark hover:bg-gold/15 border-2 border-transparent hover:border-gold rounded-2xl py-6 px-4 transition-all active:scale-95"
-          >
-            <CharacterFigure character={girlPreview} sc={0.9} />
-            <span className="text-brick font-black text-xl mt-1">女生 👧</span>
-          </button>
-        </div>
-
-        <p className="text-brick/35 text-xs text-center">选定后可以在商店自由换装 🎽</p>
-      </div>
+    <div className="flex items-center gap-0.5 w-full px-1">
+      {PET_STAGES.map((s, i) => {
+        const stageNum = i + 1
+        const isActive = stageNum === currentStage
+        const isPast   = stageNum < currentStage
+        const col      = s.color
+        return (
+          <div key={i} className="flex-1 flex flex-col items-center gap-0.5"
+               title={`${s.name} · Lv.${s.stage === 1 ? 1 : (stageNum - 1) * 5}+`}>
+            <div
+              className="w-full h-1.5 rounded-full transition-all"
+              style={{
+                background: isPast || isActive ? col : 'rgba(255,255,255,0.08)',
+                boxShadow: isActive ? `0 0 6px ${col}` : undefined,
+              }}
+            />
+            {isActive && (
+              <span style={{ fontSize: '15px', fontWeight: 900, color: col, textShadow: `0 0 4px ${col}` }}>
+                {s.name}
+              </span>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
 
 /* ══════════════════════════════════════════════════════════
-   Main wardrobe modal
+   MAIN PET MODAL
    ══════════════════════════════════════════════════════════ */
-const TABS = Object.keys(SHOP_ITEMS)
+const SHOP_TABS = ['hat', 'aura', 'companion', 'weapon']
 
 export default function PetModal({ onClose }) {
-  const [userData,  setUserData]  = useState(() => getSession() || {})
-  const [tab,       setTab]       = useState('hair')
+  const [userData, setUserData] = useState(() => {
+    const s = getSession()
+    if (s) {
+      return {
+        ...s,
+        petHat:        s.petHat        || 'hat_none',
+        petAura:       s.petAura       || 'aura_none',
+        petCompanion:  s.petCompanion  || 'companion_none',
+        petWeapon:     s.petWeapon     || 'weapon_none',
+        ownedPetItems: s.ownedPetItems || ['hat_none', 'aura_none', 'companion_none', 'weapon_none'],
+      }
+    }
+    return {}
+  })
+  const [tab, setTab]             = useState('hat')
+  const [petNameInput, setPetNameInput] = useState(() => getSession()?.petName || '')
+  const [editingName,  setEditingName]  = useState(false)
 
-  const character = userData.character || {}
-  const owned     = new Set(userData.ownedItems || [])
   const coins     = userData.coins || 0
-  const gender    = character.gender
+  const level     = getLevelInfo(userData.globalXP || 0).current.level
+  const lvInfo    = getLevelInfo(userData.globalXP || 0)
+  const stageInfo = getPetStageInfo(level)
+  const owned     = new Set(userData.ownedPetItems || ['hat_none', 'aura_none', 'companion_none'])
+  const petHat    = userData.petHat        || 'hat_none'
+  const petAura   = userData.petAura       || 'aura_none'
+  const petComp   = userData.petCompanion  || 'companion_none'
+  const petWeapon = userData.petWeapon     || 'weapon_none'
 
   const refresh = (patch) => setUserData(prev => ({ ...prev, ...patch }))
 
-  /* ── Gender pick ── */
-  const handlePickGender = (g) => {
-    const newChar = saveCharacterGender(g)
-    if (newChar) refresh({ character: newChar })
-  }
-
-  /* ── Buy ── */
   const handleBuy = (item) => {
-    const result = buyItem(item.id, item.price)
+    const result = buyPetItem(item.id, item.price)
     if (result) refresh(result)
   }
 
-  /* ── Equip ── */
-  const handleEquip = (slot, item) => {
-    const newChar = equipItem(slot, item.id)
-    if (newChar) refresh({ character: newChar })
+  const handleEquip = (item) => {
+    const category = getPetItemCategory(item.id)
+    if (!category) return
+    const result = equipPetItem(category, item.id)
+    if (result) refresh(result)
   }
 
-  /* ── Unequip (click equipped item again) ── */
-  const handleUnequip = (slot) => {
-    const newChar = unequipItem(slot)
-    if (newChar) refresh({ character: newChar })
+  const handleSavePetName = () => {
+    renamePet(petNameInput)
+    setEditingName(false)
+    refresh({ petName: petNameInput })
   }
 
-  /* ── Is item equipped? ── */
-  const isEquipped = (slot, item) => character[slot] === item.id
-
-  /* ── Filter items by gender ── */
-  const visibleItems = (slot) => {
-    const cat = SHOP_ITEMS[slot]
-    if (!cat) return []
-    return cat.items.filter(i => i.forGender === 'both' || !gender || i.forGender === gender)
+  const isEquipped = (item) => {
+    if (item.category === 'hat')       return petHat    === item.id
+    if (item.category === 'aura')      return petAura   === item.id
+    if (item.category === 'companion') return petComp   === item.id
+    if (item.category === 'weapon')    return petWeapon === item.id
+    return false
   }
 
-  /* ── Gender picker screen ── */
-  if (!gender) {
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
-        onClick={e => e.target === e.currentTarget && onClose()}
-      >
-        <GenderPicker onPick={handlePickGender} onClose={onClose} />
-      </div>
-    )
-  }
-
-  const cat     = SHOP_ITEMS[tab]
-  const items   = visibleItems(tab)
+  const tabItems = PET_SHOP_ITEMS[tab]?.items || []
+  const tabMeta  = PET_SHOP_ITEMS[tab]
+  const nextEvoLv = stageInfo.nextLv
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-cream w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
-
+      <div
+        className="w-full max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col"
+        style={{
+          background: 'rgba(7,13,26,0.97)',
+          border: '1px solid rgba(0,212,255,0.25)',
+          boxShadow: '0 0 60px rgba(0,212,255,0.12), 0 24px 64px rgba(0,0,0,0.7)',
+          maxHeight: '92vh',
+          minHeight: '80vh',
+        }}
+      >
         {/* ── Header ── */}
-        <div className="nanyang-header px-5 py-4 flex items-center justify-between shrink-0">
-          <p className="relative z-10 text-cream font-black text-2xl">我的形象</p>
-          <button onClick={onClose} className="relative z-10 text-cream/70 hover:text-cream text-4xl leading-none">×</button>
+        <div style={{
+          background: 'linear-gradient(135deg, #070d1a 0%, #0d1f3a 50%, #070d1a 100%)',
+          borderBottom: '1px solid rgba(0,212,255,0.2)',
+          padding: '12px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        }}>
+          <div>
+            <p style={{ color: '#00d4ff', fontWeight: 900, fontSize: '1.3rem', textShadow: '0 0 12px rgba(0,212,255,0.6)', letterSpacing: '0.05em' }}>
+              灵宠养成 ✨
+            </p>
+            <p style={{ color: 'rgba(0,212,255,0.45)', fontSize: '12px', fontFamily: 'monospace' }}>
+              灵宠进化系统
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{ color: 'rgba(0,212,255,0.6)', fontSize: '2.2rem', lineHeight: 1, transition: 'color 0.2s', background: 'none', border: 'none', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#00d4ff'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(0,212,255,0.6)'}
+          >
+            ×
+          </button>
         </div>
 
-        <div className="overflow-y-auto flex flex-col">
+        {/* ── Outer flex column: pet section (compact) + shop section (flex-1) ── */}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-          {/* ── Character preview + coins ── */}
-          <div className="py-5 px-4 flex items-center justify-around border-b border-cream-dark bg-cream-dark/30">
-            {/* Character */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="bg-cream rounded-2xl px-6 py-4 shadow-inner">
-                <CharacterFigure character={character} sc={1} />
+          {/* ── Pet display section ── */}
+          <div style={{
+            flexShrink: 0,
+            maxHeight: '45%',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            background: 'radial-gradient(circle at 50% 40%, rgba(0,212,255,0.08) 0%, rgba(7,13,26,0) 70%)',
+            borderBottom: '1px solid rgba(0,212,255,0.15)',
+            padding: '14px 18px 16px',
+          }}>
+            {/* ── Row 1: creature left, coins+XP right ── */}
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 14 }}>
+              {/* Creature */}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <PetCreature
+                  level={level}
+                  petHat={petHat}
+                  petAura={petAura}
+                  petCompanion={petComp}
+                  petWeapon={petWeapon}
+                  width={120}
+                />
+                <div style={{
+                  position: 'absolute', top: 2, right: -12,
+                  background: stageInfo.color, color: '#fff',
+                  fontSize: '13px', fontWeight: 900,
+                  borderRadius: '999px', padding: '2px 9px',
+                  boxShadow: `0 0 10px ${stageInfo.color}88`,
+                  border: '1.5px solid rgba(255,255,255,0.25)',
+                }}>
+                  Lv.{level}
+                </div>
               </div>
-              <span className="text-brick/40 text-xs">{gender === 'girl' ? '👧 女生' : '👦 男生'}</span>
+
+              {/* Coin + XP */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Pet name */}
+                <div style={{ textAlign: 'center' }}>
+                  {editingName ? (
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <input
+                        value={petNameInput}
+                        onChange={e => setPetNameInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleSavePetName()}
+                        maxLength={10}
+                        placeholder="宠物名字…"
+                        autoFocus
+                        style={{
+                          flex: 1, background: 'rgba(0,212,255,0.08)',
+                          border: '1.5px solid rgba(0,212,255,0.5)', borderRadius: 8,
+                          color: '#00d4ff', fontWeight: 900, fontSize: '17px',
+                          padding: '5px 10px', outline: 'none', textAlign: 'center',
+                        }}
+                      />
+                      <button onClick={handleSavePetName}
+                        style={{ background: '#00d4ff', color: '#000', fontWeight: 900, fontSize: '14px', padding: '5px 10px', borderRadius: 8, border: 'none', cursor: 'pointer' }}>
+                        ✓
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setEditingName(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      <p style={{ color: '#00d4ff', fontWeight: 900, fontSize: '20px', textShadow: '0 0 8px rgba(0,212,255,0.6)', margin: 0 }}>
+                        {userData.petName || '✏️ 给宠物取名'}
+                      </p>
+                      {userData.petName && (
+                        <p style={{ color: 'rgba(0,212,255,0.45)', fontSize: '12px', margin: '2px 0 0' }}>点击改名</p>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Coin */}
+                <div>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    background: 'rgba(255,214,10,0.08)',
+                    border: '1px solid rgba(255,214,10,0.35)',
+                    borderRadius: 12, padding: '7px 12px',
+                    boxShadow: '0 0 16px rgba(255,214,10,0.12)',
+                  }}>
+                    <span style={{ fontSize: '1.5rem' }}>🪙</span>
+                    <span style={{ color: '#ffd60a', fontWeight: 900, fontSize: '1.7rem', fontVariantNumeric: 'tabular-nums' }}>
+                      {coins.toLocaleString()}
+                    </span>
+                  </div>
+                  <p style={{ color: 'rgba(168,216,240,0.65)', fontSize: '16px', fontWeight: 700, textAlign: 'center', marginTop: 4 }}>
+                    词币余额
+                  </p>
+                </div>
+
+                {/* Level title + XP bar */}
+                <div style={{
+                  background: 'rgba(0,212,255,0.05)',
+                  border: '1px solid rgba(0,212,255,0.15)',
+                  borderRadius: 10, padding: '9px 12px',
+                }}>
+                  <div style={{ color: lvInfo.current.color, fontWeight: 900, fontSize: '20px', textAlign: 'center', marginBottom: 7 }}>
+                    {lvInfo.current.emoji} {lvInfo.current.title}
+                  </div>
+                  <div style={{ height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%', borderRadius: 4,
+                      width: `${lvInfo.pct}%`,
+                      background: `linear-gradient(90deg, ${lvInfo.current.color}88, ${lvInfo.current.color})`,
+                      boxShadow: `0 0 6px ${lvInfo.current.color}`,
+                      transition: 'width 0.7s ease',
+                    }} />
+                  </div>
+                  <div style={{ color: 'rgba(168,216,240,0.7)', fontSize: '16px', textAlign: 'right', marginTop: 5, fontFamily: 'monospace' }}>
+                    {lvInfo.next ? `${lvInfo.xpIntoLevel}/${lvInfo.xpForLevel} XP` : '✨ MAX'}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Coin balance + guide */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <span className="text-3xl">🪙</span>
-                <span className="text-brick font-black text-3xl">{coins.toLocaleString()}</span>
-              </div>
-              <span className="text-brick/45 text-sm font-semibold">词币</span>
-              <div className="text-xs text-brick/40 text-center leading-relaxed mt-1">
-                <div>⚔️ 斗争答对 +2</div>
-                <div>⚔️ 斗争通关 +15</div>
-                <div>🛡️ 无伤通关 +40</div>
-                <div>🔗 配对正确 +1</div>
-                <div>⚡ 急速对决 +8</div>
-                <div>📅 每日登录 +20</div>
-              </div>
+            {/* ── Row 2: stage tracker + name + desc — full width ── */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <StageTracker level={level} />
+              <p style={{ color: stageInfo.color, fontWeight: 900, fontSize: '1.6rem', textShadow: `0 0 10px ${stageInfo.color}88`, margin: 0 }}>
+                {stageInfo.name}
+              </p>
+              <p style={{ color: 'rgba(168,216,240,0.8)', fontSize: '17px', textAlign: 'center', lineHeight: 1.5, margin: 0 }}>
+                {stageInfo.desc}
+              </p>
+              {nextEvoLv ? (
+                <p style={{ color: 'rgba(168,216,240,0.65)', fontSize: '16px', textAlign: 'center', margin: 0 }}>
+                  下次进化: Lv.{nextEvoLv} →{' '}
+                  <span style={{ color: PET_STAGES[getStage(level)].color, fontWeight: 900 }}>
+                    {PET_STAGES[getStage(level)].name}
+                  </span>
+                </p>
+              ) : (
+                <p style={{ color: '#ffd60a', fontSize: '17px', fontWeight: 900, margin: 0, textShadow: '0 0 8px rgba(255,214,10,0.6)' }}>
+                  ✨ 终极形态
+                </p>
+              )}
             </div>
           </div>
 
-          {/* ── Shop category tabs ── */}
-          <div className="flex border-b border-cream-dark shrink-0 bg-cream overflow-x-auto">
-            {TABS.map(key => {
-              const c = SHOP_ITEMS[key]
-              return (
-                <button
-                  key={key}
-                  onClick={() => setTab(key)}
-                  className={`flex-1 min-w-[60px] py-3 text-sm font-semibold transition-colors border-b-2 -mb-px whitespace-nowrap ${
-                    tab === key
-                      ? 'border-brick text-brick'
-                      : 'border-transparent text-brick/55 hover:text-brick/80'
-                  }`}
-                >
-                  <div className="text-base">{c.icon}</div>
-                  <div className="text-xs mt-0.5">{c.label}</div>
-                </button>
-              )
-            })}
-          </div>
+          {/* ── SHOP SECTION — flex: 1, takes ~half the modal ── */}
+          <div style={{ flex: 1, minHeight: 220, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-          {/* ── Item grid ── */}
-          <div className="p-4 grid grid-cols-3 gap-3">
-            {items.map(item => (
-              <ShopItem
-                key={item.id}
-                item={item}
-                slot={tab}
-                owned={owned.has(item.id) || item.price === 0}
-                equipped={isEquipped(tab, item)}
-                coins={coins}
-                onBuy={() => handleBuy(item)}
-                onEquip={
-                  isEquipped(tab, item)
-                    ? () => handleUnequip(tab)
-                    : () => handleEquip(tab, item)
-                }
-              />
-            ))}
-          </div>
+            {/* Category tabs */}
+            <div style={{
+              display: 'flex', flexShrink: 0,
+              borderBottom: '1px solid rgba(0,212,255,0.12)',
+              background: 'rgba(7,13,26,0.95)',
+            }}>
+              {SHOP_TABS.map(key => {
+                const meta   = PET_SHOP_ITEMS[key]
+                const active = tab === key
+                const items  = meta.items
+                const ownedN = items.filter(i => owned.has(i.id) || i.price === 0).length
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setTab(key)}
+                    style={{
+                      flex: 1, padding: '5px 2px',
+                      borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+                      borderBottom: active ? '2.5px solid #00d4ff' : '2.5px solid transparent',
+                      color: active ? '#00d4ff' : 'rgba(168,216,240,0.4)',
+                      background: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                      textShadow: active ? '0 0 10px rgba(0,212,255,0.5)' : 'none',
+                      display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
+                    }}
+                  >
+                    <span style={{ fontSize: '1.2rem' }}>{meta.icon}</span>
+                    <span style={{ fontSize: '16px', fontWeight: 700 }}>{meta.label}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, opacity: 0.55 }}>{ownedN}/{items.length}</span>
+                  </button>
+                )
+              })}
+            </div>
 
+            {/* Category header */}
+            <div style={{
+              padding: '9px 16px 5px',
+              display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
+            }}>
+              <span style={{ fontSize: '1.7rem' }}>{tabMeta.icon}</span>
+              <span style={{ color: '#00d4ff', fontWeight: 900, fontSize: '22px' }}>{tabMeta.label}</span>
+              <span style={{ color: 'rgba(168,216,240,0.4)', fontSize: '16px', marginLeft: 'auto' }}>
+                {tabItems.filter(i => owned.has(i.id) || i.price === 0).length}/{tabItems.length} 已拥有
+              </span>
+            </div>
+
+            {/* Item grid — scrollable, takes remaining height */}
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch', padding: '4px 12px 28px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                {tabItems.map(item => (
+                  <PetShopItem
+                    key={item.id}
+                    item={item}
+                    owned={owned.has(item.id) || item.price === 0}
+                    equipped={isEquipped(item)}
+                    coins={coins}
+                    onBuy={() => handleBuy(item)}
+                    onEquip={() => handleEquip(item)}
+                  />
+                ))}
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
     </div>

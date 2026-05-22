@@ -54,12 +54,13 @@ function LevelUpOverlay({ info, onDone }) {
       {/* Content */}
       <div className="relative z-10 text-center animate-levelBurst">
         <div className="text-[7rem] leading-none mb-1">{current.emoji}</div>
-        <div className="font-black tracking-widest mb-1"
-             style={{ fontSize: '3.2rem', color: current.color, textShadow: `0 0 40px ${current.color}, 0 0 80px ${current.color}88` }}>
+        <div className="tracking-widest mb-1"
+             style={{ fontFamily: '"Orbitron", sans-serif', fontSize: '3.2rem', fontWeight: 900, color: current.color, textShadow: `0 0 40px ${current.color}, 0 0 80px ${current.color}88, 0 0 120px ${current.color}44` }}>
           LEVEL UP!
         </div>
-        <div className="font-black text-2xl text-white/90 mb-0.5">Lv.{current.level} · {current.title}</div>
-        <div className="text-base text-white/40 font-mono">恭喜升级！</div>
+        <div className="font-black text-2xl text-white/90 mb-0.5" style={{ fontFamily: '"Orbitron", sans-serif', letterSpacing: '0.06em' }}>LV.{current.level}</div>
+        <div className="text-lg text-white/70 font-black mb-0.5">{current.title}</div>
+        <div className="text-sm text-white/35 font-mono" style={{ fontFamily: '"Share Tech Mono", monospace', letterSpacing: '0.15em' }}>◈ 恭喜升级 ◈</div>
       </div>
     </div>
   )
@@ -69,12 +70,12 @@ const UNITS = [unit1, unit2, unit3, unit4, unit5, unit6]
 const UNIT_LABELS = ['一', '二', '三', '四', '五', '六']
 const UNIT_ICONS  = ['🌱', '🌸', '🌟', '🔥', '💡', '🏆']
 const UNIT_COLORS = [
-  { border: 'rgba(0,212,255,0.7)',  bg: 'rgba(0,212,255,0.08)',  glow: 'rgba(0,212,255,0.4)',  text: '#00d4ff'  },
+  { border: 'rgba(0,240,255,0.7)',  bg: 'rgba(0,240,255,0.08)',  glow: 'rgba(0,240,255,0.4)',  text: '#00f0ff'  },
   { border: 'rgba(155,93,229,0.7)', bg: 'rgba(155,93,229,0.08)', glow: 'rgba(155,93,229,0.4)', text: '#9b5de5'  },
   { border: 'rgba(6,214,160,0.7)',  bg: 'rgba(6,214,160,0.08)',  glow: 'rgba(6,214,160,0.4)',  text: '#06d6a0'  },
   { border: 'rgba(255,107,53,0.7)', bg: 'rgba(255,107,53,0.08)', glow: 'rgba(255,107,53,0.4)', text: '#ff6b35'  },
-  { border: 'rgba(247,37,133,0.7)', bg: 'rgba(247,37,133,0.08)', glow: 'rgba(247,37,133,0.4)', text: '#f72585'  },
-  { border: 'rgba(255,214,10,0.7)', bg: 'rgba(255,214,10,0.08)', glow: 'rgba(255,214,10,0.4)', text: '#ffd60a'  },
+  { border: 'rgba(247,37,133,0.7)', bg: 'rgba(247,37,133,0.08)', glow: 'rgba(247,37,133,0.4)', text: '#ff007f'  },
+  { border: 'rgba(255,214,10,0.7)', bg: 'rgba(255,214,10,0.08)', glow: 'rgba(255,214,10,0.4)', text: '#fdee30'  },
 ]
 
 export default function App() {
@@ -306,7 +307,10 @@ export default function App() {
     setBossState({ available: false, hp: 0, maxHp: 5000, defeated: false })
   }
 
-  const handleOpenProfile = () => { const f = getSession(); if (f) setUser(f); setShowProfile(true) }
+  /* Close WotD if open, then open the requested modal */
+  const openModal = (setter) => { setShowWotD(false); setter(true) }
+
+  const handleOpenProfile = () => { const f = getSession(); if (f) setUser(f); openModal(setShowProfile) }
 
   /* ── Hidden teacher trigger (5 clicks on title within 3 s) ── */
   const handleTitleClick = () => {
@@ -335,13 +339,75 @@ export default function App() {
       {levelUpInfo && <LevelUpOverlay info={levelUpInfo} onDone={() => setLevelUpInfo(null)} />}
 
       {/* ── Header ──────────────────────────────────────── */}
-      <header className="cyber-header py-3 px-4 relative z-10">
-        <div className="text-center relative z-10">
-          <p className="glow-subtitle text-xs tracking-[0.35em] mb-0.5 font-mono uppercase">
-            ◈ 华文词汇学习系统 ◈
+      <header className="cyber-header relative" style={{ paddingTop: 0, paddingBottom: 0, zIndex: 30 }}>
+
+        {/* ── WARNING STRIPE — very top edge ── */}
+        <div className="absolute top-0 left-0 right-0 pointer-events-none" style={{
+          height: 3,
+          backgroundImage: 'repeating-linear-gradient(90deg, rgba(253,238,48,0.75) 0px, rgba(253,238,48,0.75) 8px, rgba(3,7,18,0.85) 8px, rgba(3,7,18,0.85) 16px)',
+          backgroundSize: '16px 3px',
+          animation: 'warningStripe 0.6s linear infinite',
+          zIndex: 20,
+        }} />
+
+        {/* ── Sweeping bottom beam ── */}
+        <div className="absolute bottom-0 left-0 right-0 overflow-hidden pointer-events-none" style={{ height: 2 }}>
+          <div style={{
+            position: 'absolute', top: 0, left: 0,
+            width: '50%', height: '100%',
+            background: 'linear-gradient(90deg, transparent, rgba(0,240,255,1), rgba(155,93,229,0.8), rgba(255,0,127,0.5), transparent)',
+            animation: 'headerBeam 4s ease-in-out infinite',
+            filter: 'blur(1px)',
+            boxShadow: '0 0 14px rgba(0,240,255,0.9)',
+          }} />
+        </div>
+
+        {/* ── Side accent lines ── */}
+        <div className="absolute left-0 top-0 bottom-0 w-px pointer-events-none"
+             style={{ background: 'linear-gradient(to bottom, rgba(0,240,255,0.7), rgba(0,240,255,0.2), transparent)' }} />
+        <div className="absolute right-0 top-0 bottom-0 w-px pointer-events-none"
+             style={{ background: 'linear-gradient(to bottom, rgba(253,238,48,0.5), rgba(155,93,229,0.3), transparent)' }} />
+
+        {/* ── 4-color L-bracket corners ── */}
+        {/* TL cyan */}
+        <span className="absolute pointer-events-none" style={{ top: 4, left: 4, width: 16, height: 16, borderTop: '2px solid rgba(0,240,255,0.95)', borderLeft: '2px solid rgba(0,240,255,0.95)', boxShadow: '0 0 10px rgba(0,240,255,0.6)' }} />
+        {/* TR acid yellow */}
+        <span className="absolute pointer-events-none" style={{ top: 4, right: 4, width: 16, height: 16, borderTop: '2px solid rgba(253,238,48,0.9)', borderRight: '2px solid rgba(253,238,48,0.9)', boxShadow: '0 0 10px rgba(253,238,48,0.5)' }} />
+        {/* BL laser pink */}
+        <span className="absolute pointer-events-none" style={{ bottom: 4, left: 4, width: 16, height: 16, borderBottom: '2px solid rgba(255,0,127,0.9)', borderLeft: '2px solid rgba(255,0,127,0.9)', boxShadow: '0 0 10px rgba(255,0,127,0.5)' }} />
+        {/* BR purple */}
+        <span className="absolute pointer-events-none" style={{ bottom: 4, right: 4, width: 16, height: 16, borderBottom: '2px solid rgba(155,93,229,0.9)', borderRight: '2px solid rgba(155,93,229,0.9)', boxShadow: '0 0 10px rgba(155,93,229,0.5)' }} />
+
+        {/* ── HUD STATUS ROW — top ── */}
+        <div className="flex items-center justify-between px-8 pt-2.5 pb-0.5 pointer-events-none select-none">
+          <div className="flex items-center gap-2.5">
+            <span className="status-dot status-dot-online" />
+            <span style={{ fontFamily: '"Share Tech Mono",monospace', fontSize: '0.6rem', color: 'rgba(6,214,160,0.8)', letterSpacing: '0.12em' }}>系统在线</span>
+            <span className="sys-tag" style={{ color: 'rgba(6,214,160,0.7)', background: 'rgba(6,214,160,0.08)', padding: '1px 6px', border: '1px solid rgba(6,214,160,0.25)', fontSize: '0.6rem' }}>身份已验证</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="sys-tag sys-tag-yellow" style={{ fontSize: '0.58rem' }}>备考模式</span>
+          </div>
+        </div>
+
+        {/* ── BARCODE STRIPS — left and right of title ── */}
+        <div className="absolute pointer-events-none select-none" style={{ top: '50%', left: 36, transform: 'translateY(-50%)', opacity: 0.35 }}>
+          <div className="barcode-strip" style={{ width: 32, height: 28 }} />
+          <div style={{ fontFamily: '"Share Tech Mono",monospace', fontSize: '0.38rem', color: 'rgba(0,240,255,0.5)', letterSpacing: '0.06em', marginTop: 2 }}>CHS·A3</div>
+        </div>
+        <div className="absolute pointer-events-none select-none" style={{ top: '50%', right: 90, transform: 'translateY(-50%)', opacity: 0.35 }}>
+          <div className="barcode-strip" style={{ width: 32, height: 28 }} />
+          <div style={{ fontFamily: '"Share Tech Mono",monospace', fontSize: '0.38rem', color: 'rgba(253,238,48,0.45)', letterSpacing: '0.06em', marginTop: 2 }}>FF·7E</div>
+        </div>
+
+        {/* ── TITLE BLOCK ── */}
+        <div className="text-center relative z-10 py-1">
+          <p className="glow-subtitle text-xs tracking-[0.35em] mb-0.5 uppercase">
+            华文词汇学习系统
           </p>
           <h1
-            className="glow-title text-3xl sm:text-4xl font-black animate-titleFlicker cursor-default select-none"
+            className="glow-title glitch-title text-3xl sm:text-4xl font-black cursor-default select-none"
+            data-text="中一词语宝典"
             style={{ letterSpacing: '0.12em' }}
             onClick={handleTitleClick}
           >
@@ -349,17 +415,24 @@ export default function App() {
           </h1>
         </div>
 
-        {/* Logout button — top right */}
+        {/* ── HUD STATUS ROW — bottom ── */}
+        <div className="flex items-center justify-between px-8 pt-0.5 pb-2.5 pointer-events-none select-none">
+          <span style={{ fontFamily: '"Share Tech Mono",monospace', fontSize: '0.58rem', color: 'rgba(0,240,255,0.4)', letterSpacing: '0.1em' }}>6 单元 · 400+ 词语</span>
+          <span className="sys-tag sys-tag-yellow" style={{ fontSize: '0.58rem' }}>⚠ 备考模式</span>
+        </div>
+
+        {/* ── Logout button ── */}
         <button
           onClick={handleLogout}
-          className="neon-btn absolute top-1/2 -translate-y-1/2 right-4 z-20 text-base font-black px-4 py-2"
+          className="cyber-btn z-20 text-sm"
+          style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)' }}
         >
           切换
         </button>
       </header>
 
       {/* ── User bar ────────────────────────────────────── */}
-      <div className="glass-panel px-3 py-2 flex items-center gap-2 shrink-0 overflow-x-auto relative z-10">
+      <div className="glass-panel holo-card px-3 py-2 flex items-center gap-2 shrink-0 overflow-x-auto relative" style={{ zIndex: 30 }}>
 
         {/* Name → profile */}
         <button
@@ -367,22 +440,36 @@ export default function App() {
           className="flex items-center gap-1.5 hover:opacity-80 transition-opacity shrink-0"
         >
           <span className="text-lg">👤</span>
-          <span className="text-neon-cyan font-black text-base underline underline-offset-2 decoration-dotted max-w-[80px] truncate text-neon-glow">
+          <span className="text-neon-cyan font-black text-base neon-underline max-w-[80px] truncate text-neon-glow">
             {user.name}
           </span>
         </button>
 
-        <span className="text-neon-cyan/20 text-lg select-none">│</span>
+        <span className="text-neon-cyan/15 text-lg select-none">│</span>
 
         {/* XP bar */}
         {xpData && (
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-xs font-black tabular-nums" style={{ color: xpData.current.color, textShadow: `0 0 8px ${xpData.current.color}88` }}>
+            <span className="tabular-nums" style={{
+              fontFamily: '"Orbitron", sans-serif',
+              fontSize: '0.62rem',
+              fontWeight: 700,
+              color: xpData.current.color,
+              textShadow: `0 0 10px ${xpData.current.color}aa, 0 0 20px ${xpData.current.color}44`,
+              letterSpacing: '0.04em',
+            }}>
               {xpData.current.emoji} {xpData.current.level}
             </span>
-            <div className="relative h-2 w-16 sm:w-24 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
-                   style={{ width: `${xpData.pct}%`, background: `linear-gradient(90deg, ${xpData.current.color}88, ${xpData.current.color})`, boxShadow: `0 0 6px ${xpData.current.color}` }} />
+            {/* XP bar with energy flow */}
+            <div className="relative h-2 w-16 sm:w-24 rounded-full overflow-hidden"
+                 style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${xpData.current.color}33` }}>
+              <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 xp-bar-fill"
+                   style={{
+                     width: `${xpData.pct}%`,
+                     background: `linear-gradient(90deg, ${xpData.current.color}44, ${xpData.current.color}cc, ${xpData.current.color}ff, ${xpData.current.color}88, ${xpData.current.color}cc)`,
+                     backgroundSize: '200% 100%',
+                     boxShadow: `0 0 8px ${xpData.current.color}88, 0 0 2px ${xpData.current.color}`,
+                   }} />
             </div>
           </div>
         )}
@@ -391,7 +478,7 @@ export default function App() {
 
         {/* Character button → pet modal */}
         <button
-          onClick={() => setShowPet(true)}
+          onClick={() => openModal(setShowPet)}
           className="flex items-center gap-1 neon-btn-purple rounded-full px-3 py-1 text-sm shrink-0"
         >
           <span className="text-base">🧑</span>
@@ -406,7 +493,7 @@ export default function App() {
           const hasUnclaimed   = !wotdClaimed || done < total
           return (
             <button
-              onClick={() => setShowMissions(true)}
+              onClick={() => openModal(setShowMissions)}
               className={`relative flex items-center gap-1 rounded-full px-3 py-1 border transition-all shrink-0 text-sm font-black ${
                 allClaimed && wotdClaimed
                   ? 'bg-neon-green/10 border-neon-green/40 text-neon-green'
@@ -429,7 +516,7 @@ export default function App() {
           const boss = getCurrentBoss()
           return (
             <button
-              onClick={() => setShowBoss(true)}
+              onClick={() => openModal(setShowBoss)}
               className={`relative flex items-center gap-1 rounded-full px-3 py-1 border shrink-0 transition-all text-sm font-black ${
                 bossState.defeated
                   ? 'bg-neon-green/10 border-neon-green/40 text-neon-green'
@@ -452,7 +539,7 @@ export default function App() {
         {/* 🏫 Today's logins — far right */}
         {todayLogins.available && (
           <button
-            onClick={() => setShowLogins(true)}
+            onClick={() => openModal(setShowLogins)}
             className="flex items-center gap-1 bg-neon-cyan/8 hover:bg-neon-cyan/15 border border-neon-cyan/30 rounded-full px-3 py-1 transition-all shrink-0 text-sm font-black text-neon-cyan"
             title="今日登录人数"
           >
@@ -463,34 +550,53 @@ export default function App() {
       </div>
 
       {/* ── Unit Tab Navigation ──────────────────────────── */}
-      <nav className="relative z-10 overflow-x-auto shrink-0"
-           style={{ background: 'rgba(7,13,26,0.95)', borderBottom: '1px solid rgba(0,212,255,0.12)' }}>
+      <nav className="relative overflow-x-auto shrink-0"
+           style={{ zIndex: 30, background: 'rgba(4,10,22,0.97)', borderBottom: '1px solid rgba(0,240,255,0.15)' }}>
         <div className="flex">
           {UNITS.map((unit, i) => {
-            const score   = user.bossScores?.[String(i + 1)]
-            const cleared = score?.cleared
-            const stars   = cleared ? 3 - (score.bestMistakes || 0) : 0
-            const c       = UNIT_COLORS[i]
+            const score    = user.bossScores?.[String(i + 1)]
+            const cleared  = score?.cleared
+            const stars    = cleared ? 3 - (score.bestMistakes || 0) : 0
+            const c        = UNIT_COLORS[i]
             const isActive = activeUnit === i
             return (
               <button
                 key={i}
                 onClick={() => setActiveUnit(i)}
-                className="flex-1 min-w-[110px] px-2 py-2.5 text-center transition-all relative border-b-2"
+                className="flex-1 min-w-[110px] px-2 py-2.5 text-center transition-all relative border-b-2 overflow-hidden"
                 style={{
                   borderBottomColor: isActive ? c.border : 'transparent',
                   background:        isActive ? c.bg     : 'transparent',
-                  color:             isActive ? c.text   : 'rgba(160,200,240,0.45)',
+                  color:             isActive ? c.text   : 'rgba(160,200,240,0.4)',
+                  transition:        'all 0.25s ease',
                 }}
               >
-                {/* Active tab glow underline */}
+                {/* Active state: radial aura glow from bottom */}
                 {isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                        style={{ background: c.border, boxShadow: `0 0 12px ${c.glow}, 0 0 4px ${c.glow}` }} />
+                  <>
+                    {/* Glow underline bar */}
+                    <span className="absolute bottom-0 left-0 right-0 h-[3px]"
+                          style={{
+                            background: `linear-gradient(90deg, transparent, ${c.text}, transparent)`,
+                            boxShadow:  `0 0 16px ${c.glow}, 0 0 32px ${c.glow}66, 0 0 48px ${c.glow}33`,
+                          }} />
+                    {/* Radial glow aura from bottom-center */}
+                    <span className="absolute inset-0 pointer-events-none"
+                          style={{
+                            background: `radial-gradient(ellipse 80% 60% at 50% 120%, ${c.glow} 0%, transparent 70%)`,
+                            opacity: 0.28,
+                          }} />
+                    {/* Top-edge highlight */}
+                    <span className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+                          style={{ background: `linear-gradient(90deg, transparent, ${c.text}55, transparent)` }} />
+                  </>
                 )}
 
                 <div className="text-xl font-black flex items-center justify-center gap-1 leading-none"
-                     style={{ textShadow: isActive ? `0 0 12px ${c.glow}` : 'none' }}>
+                     style={{
+                       textShadow: isActive ? `0 0 18px ${c.glow}, 0 0 36px ${c.glow}66` : 'none',
+                       transition: 'text-shadow 0.25s',
+                     }}>
                   <span>{UNIT_ICONS[i]}</span>
                   <span>单元{UNIT_LABELS[i]}</span>
                 </div>
@@ -500,12 +606,15 @@ export default function App() {
                 </div>
 
                 <div className="text-xs mt-0.5 flex items-center justify-center gap-1 opacity-70">
-                  <span>{unit.vocabs.length} 词</span>
+                  <span style={{ fontFamily: '"Share Tech Mono", monospace', letterSpacing: '0.05em' }}>{unit.vocabs.length}</span>
+                  <span>词</span>
                   {cleared && (
                     <span className="text-xs">
                       {[0,1,2].map(s => (
-                        <span key={s} style={{ color: s < stars ? '#ffd60a' : 'rgba(255,214,10,0.15)',
-                                               textShadow: s < stars ? '0 0 6px rgba(255,214,10,0.6)' : 'none' }}>★</span>
+                        <span key={s} style={{
+                          color:      s < stars ? '#fdee30' : 'rgba(255,214,10,0.12)',
+                          textShadow: s < stars ? '0 0 8px rgba(255,214,10,0.8), 0 0 16px rgba(255,214,10,0.4)' : 'none',
+                        }}>★</span>
                       ))}
                     </span>
                   )}
@@ -554,10 +663,10 @@ export default function App() {
             }`}
             style={{
               background: missionDone.kind === 'all_three'
-                ? 'rgba(255,214,10,0.12)' : 'rgba(0,212,255,0.10)',
+                ? 'rgba(255,214,10,0.12)' : 'rgba(0,240,255,0.10)',
               backdropFilter: 'blur(16px)',
               boxShadow: missionDone.kind === 'all_three'
-                ? '0 0 30px rgba(255,214,10,0.3)' : '0 0 30px rgba(0,212,255,0.3)',
+                ? '0 0 30px rgba(255,214,10,0.3)' : '0 0 30px rgba(0,240,255,0.3)',
             }}
           >
             <span className="text-3xl">{missionDone.icon || '📜'}</span>
@@ -589,7 +698,7 @@ export default function App() {
             />
           </div>
           {/* Pet name */}
-          <p style={{ color: '#00d4ff', textShadow: '0 0 8px rgba(0,212,255,0.6)', fontWeight: 900, fontSize: '17px', textAlign: 'center', width: '100%' }}>
+          <p style={{ color: '#00f0ff', textShadow: '0 0 8px rgba(0,240,255,0.6)', fontWeight: 900, fontSize: '17px', textAlign: 'center', width: '100%' }}>
             {user.petName || user.avatarName || user.name}
           </p>
           {/* Level badge */}
@@ -619,13 +728,13 @@ export default function App() {
         <div className="fixed right-4 top-1/2 -translate-y-1/2 z-20 hidden 2xl:flex flex-col pointer-events-none"
              style={{ width: 270 }}>
           <div className="glass-card p-5">
-            <p style={{ color: '#ffd60a', fontWeight: 900, fontSize: '20px', textAlign: 'center', marginBottom: 14, letterSpacing: '0.06em', textShadow: '0 0 12px rgba(255,214,10,0.7)' }}>
+            <p style={{ color: '#fdee30', fontWeight: 900, fontSize: '20px', textAlign: 'center', marginBottom: 14, letterSpacing: '0.06em', textShadow: '0 0 12px rgba(255,214,10,0.7)' }}>
               🏆 排行榜
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {leaderboard.slice(0, 5).map((entry, i) => {
                 const isMe = entry.name === user?.name
-                const rankColor = i === 0 ? '#ffd60a' : i === 1 ? '#C0C0C0' : i === 2 ? '#cd7f32' : 'rgba(0,212,255,0.35)'
+                const rankColor = i === 0 ? '#fdee30' : i === 1 ? '#C0C0C0' : i === 2 ? '#cd7f32' : 'rgba(0,240,255,0.35)'
                 return (
                   <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     {/* Rank */}
@@ -637,8 +746,8 @@ export default function App() {
                     {/* Name + title */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{
-                        color:      isMe ? '#00d4ff' : 'rgba(220,240,255,0.9)',
-                        textShadow: isMe ? '0 0 10px rgba(0,212,255,0.9)' : 'none',
+                        color:      isMe ? '#00f0ff' : 'rgba(220,240,255,0.9)',
+                        textShadow: isMe ? '0 0 10px rgba(0,240,255,0.9)' : 'none',
                         fontWeight: isMe ? 900 : 700,
                         fontSize:   '17px',
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -646,7 +755,7 @@ export default function App() {
                       }}>
                         {isMe ? '▶ ' : ''}{entry.name}
                       </p>
-                      <p style={{ color: entry.color || 'rgba(0,212,255,0.5)', fontSize: '14px', fontFamily: 'monospace', lineHeight: 1.3, marginTop: 2 }}>
+                      <p style={{ color: entry.color || 'rgba(0,240,255,0.5)', fontSize: '14px', fontFamily: 'monospace', lineHeight: 1.3, marginTop: 2 }}>
                         {entry.title} · Lv.{entry.level}
                       </p>
                     </div>
