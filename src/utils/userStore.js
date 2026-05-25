@@ -278,6 +278,23 @@ export function addCoins(amount) {
   emitCoins(amount, u.coins)
 }
 
+/** Silently restore XP to a specific value if it's higher than current local value.
+ *  Used to re-sync from Redis when a student's localStorage was cleared. */
+export function restoreXP(targetXP) {
+  const name = getCurrentName(); if (!name) return
+  const users = loadUsers(); const u = users[name]; if (!u) return
+  ensureDefaults(u)
+  const current = u.globalXP || 0
+  if (targetXP <= current) return            // already up to date
+  u.globalXP = targetXP
+  saveUsers(users)
+  // Dispatch xp event so the header bar re-renders with restored level
+  window.dispatchEvent(new CustomEvent('vocab_xp', { detail: { amount: targetXP - current, total: targetXP, source: 'restore' } }))
+  const newInfo = getLevelInfo(u.globalXP)
+  // Don't fire level-up animation on restore — just quietly update the bar
+  window.dispatchEvent(new CustomEvent('vocab_xp_restored', { detail: { level: newInfo.current.level, info: newInfo } }))
+}
+
 /** Add XP to current user. Dispatches vocab_xp (always) and vocab_levelup (on level change). */
 export function addXP(amount, source = '') {
   const name = getCurrentName(); if (!name) return

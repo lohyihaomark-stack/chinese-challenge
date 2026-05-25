@@ -19,7 +19,7 @@ import TodayLoginsModal from './components/TodayLoginsModal'
 import GlobalBossModal from './components/GlobalBossModal'
 import BossDamageToast from './components/BossDamageToast'
 import FloatingParticles from './components/FloatingParticles'
-import { loginUser, getSession, logoutUser, getDailyMissions, isWordOfDayClaimed, getLevelInfo, syncProgress } from './utils/userStore'
+import { loginUser, getSession, logoutUser, getDailyMissions, isWordOfDayClaimed, getLevelInfo, syncProgress, restoreXP } from './utils/userStore'
 import { getCurrentBoss } from './utils/globalBoss'
 import TeacherDashboard from './components/TeacherDashboard'
 
@@ -111,6 +111,19 @@ export default function App() {
   const [levelUpInfo, setLevelUpInfo] = useState(null)
   const [leaderboard, setLeaderboard] = useState([])
 
+  /* ── Restore XP from Redis if localStorage was wiped ──── */
+  const restoreXPFromRedis = (name, localXP) => {
+    fetch(`/api/update-xp?name=${encodeURIComponent(name)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.xp && d.xp > (localXP || 0)) {
+          restoreXP(d.xp)
+          setXpData(getLevelInfo(d.xp))
+        }
+      })
+      .catch(() => {})
+  }
+
   /* ── Push XP to server (debounced 4 s) ───────────────── */
   const pushXP = (name, xp) => {
     if (!name) return
@@ -159,12 +172,14 @@ export default function App() {
       setWotdClaimed(claimed)
       trackLogin(session.name)
       fetchBossState()
-      // Push current XP so leaderboard stays accurate on page refresh
+      // Push current XP so leaderboard stays accurate on page refresh,
+      // then restore from Redis if this browser's localStorage was reset.
       fetch('/api/update-xp', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ name: session.name, xp: u.globalXP || 0 }),
       }).catch(() => {})
+      restoreXPFromRedis(session.name, u.globalXP || 0)
       syncProgress()
       if (!claimed) setTimeout(() => setShowWotD(true), 600)
     }
@@ -290,12 +305,14 @@ export default function App() {
     setWotdClaimed(claimed)
     trackLogin(name)
     fetchBossState()
-    // Push XP immediately on login so leaderboard is current
+    // Push XP immediately on login so leaderboard is current,
+    // then restore from Redis if this browser's localStorage was reset.
     fetch('/api/update-xp', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ name, xp: u.globalXP || 0 }),
     }).then(() => fetchLeaderboard()).catch(() => {})
+    restoreXPFromRedis(name, u.globalXP || 0)
     syncProgress()
     if (!claimed) setTimeout(() => setShowWotD(true), 800)
   }
