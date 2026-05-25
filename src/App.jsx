@@ -683,7 +683,7 @@ export default function App() {
       )}
 
       {/* ── Pet sidebar (left) ──────────────────────────── */}
-      <div className="fixed left-20 top-1/2 -translate-y-1/2 z-20 hidden 2xl:flex flex-col items-center gap-2 pointer-events-none"
+      <div className="fixed left-20 top-1/2 -translate-y-1/2 z-20 hidden xl:flex flex-col items-center gap-2 pointer-events-none"
            style={{ width: 190 }}>
         <div className="glass-card p-4 flex flex-col items-center gap-3 w-full">
           {/* Pet creature */}
@@ -725,7 +725,7 @@ export default function App() {
 
       {/* ── XP leaderboard sidebar ──────────────────────── */}
       {leaderboard.length > 0 && (
-        <div className="fixed right-4 top-1/2 -translate-y-1/2 z-20 hidden 2xl:flex flex-col pointer-events-none"
+        <div className="fixed right-4 top-1/2 -translate-y-1/2 z-20 hidden xl:flex flex-col pointer-events-none"
              style={{ width: 270 }}>
           <div className="glass-card p-5">
             <p style={{ color: '#fdee30', fontWeight: 900, fontSize: '20px', textAlign: 'center', marginBottom: 14, letterSpacing: '0.06em', textShadow: '0 0 12px rgba(255,214,10,0.7)' }}>
