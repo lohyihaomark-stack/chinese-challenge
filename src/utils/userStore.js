@@ -628,6 +628,42 @@ export function trackWordResult(unitNum, vocabId, isCorrect) {
   saveUsers(users)
 }
 
+/** Set of vocab ids (as strings) the student has already encountered in a
+ *  game for this unit. Used to surface never-seen words first. */
+export function getSeenIds(unitNum) {
+  const name = getCurrentName(); if (!name) return new Set()
+  const users = loadUsers(); const u = users[name]; if (!u) return new Set()
+  const mastery = u.wordMastery?.[String(unitNum)] || {}
+  const s = new Set()
+  for (const [id, rec] of Object.entries(mastery)) {
+    if (rec && rec.seen > 0) s.add(id)
+  }
+  return s
+}
+
+/** Spaced-repetition queue across ALL units.
+ *  A word is due when it was answered wrong and ≥1 day has passed, or it
+ *  hasn't been seen for ≥7 days. Hardest + most-overdue words first. */
+export function getDueReviews(units, max = 12) {
+  const name = getCurrentName(); if (!name) return []
+  const users = loadUsers(); const u = users[name]; if (!u?.wordMastery) return []
+  const now = Date.now()
+  const out = []
+  for (const unit of units) {
+    const mastery = u.wordMastery[String(unit.unit)] || {}
+    for (const v of unit.vocabs) {
+      const m = mastery[String(v.id)]
+      if (!m || !m.seen) continue
+      const days      = m.lastSeen ? (now - Date.parse(m.lastSeen)) / 86400000 : 999
+      const wrongRate = m.wrong / m.seen
+      const due = (m.wrong > 0 && days >= 1) || days >= 7
+      if (!due) continue
+      out.push({ vocab: v, unitNum: unit.unit, score: wrongRate * 3 + Math.min(days, 14) / 14 })
+    }
+  }
+  return out.sort((a, b) => b.score - a.score).slice(0, max)
+}
+
 /** Return vocabs the student has answered wrong at least once, sorted by
  *  wrong-rate descending (hardest first).  Pass the full vocabs array. */
 export function getWeakWords(unitNum, vocabs) {

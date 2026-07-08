@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { addCoins, addXP } from '../utils/userStore'
+import { nextQuestions } from '../utils/questionEngine'
 import { speak } from '../utils/speech'
 
 /* ═══════════════════════════════════════════════════════════
@@ -337,15 +338,20 @@ function shuffle(arr) {
   return a
 }
 
-function buildQuestions(vocabs) {
+function buildQuestions(vocabs, unitNum) {
   const wordSet = buildWordSet(vocabs)
   const pool    = vocabs.filter(v => v.example && v.example.length > v.hanzi.length + 3)
-  // Always shuffle so order is different every game
-  const picked  = shuffle(pool).slice(0, 10)
+  // Cycle the unit so consecutive games surface different words.
+  const picked  = nextQuestions(`sentence_u${unitNum}`, pool, 15, { unitNum })
 
   return picked.map(v => {
-    const tiles  = buildTiles(v.example, v.hanzi, wordSet)
-    let shuffled = shuffle(tiles)
+    // Two sentence sources — the example, and the cloze sentence with the
+    // word filled back in — so a word can be a different puzzle on replay.
+    const filled  = v.sentence && v.sentence.includes('___') ? v.sentence.replace('___', v.hanzi) : null
+    const sources = [v.example, filled].filter(Boolean)
+    const src     = sources[Math.floor(Math.random() * sources.length)] || v.example
+    const tiles   = buildTiles(src, v.hanzi, wordSet)
+    let shuffled  = shuffle(tiles)
     for (let t = 0; t < 8 && shuffled.join('') === tiles.join(''); t++) shuffled = shuffle(tiles)
     return { vocab: v, tiles, shuffled }
   })
@@ -386,7 +392,7 @@ export default function SentenceBuilderGame({ vocabs, unitNum }) {
 
   /* ── Start ─────────────────────────────────────────────── */
   const startGame = useCallback(() => {
-    const qs = buildQuestions(vocabs)
+    const qs = buildQuestions(vocabs, unitNum)
     if (!qs.length) return
     setQuestions(qs);  setQIdx(0);  setPlaced([])
     setLives(MAX_LIVES); livesRef.current = MAX_LIVES
@@ -396,7 +402,7 @@ export default function SentenceBuilderGame({ vocabs, unitNum }) {
     setTrail([]); setHistory([])
     lockedRef.current = false
     setPhase('playing')
-  }, [vocabs])
+  }, [vocabs, unitNum])
 
   /* ── Wrong ─────────────────────────────────────────────── */
   const doWrong = useCallback(() => {
@@ -490,7 +496,7 @@ export default function SentenceBuilderGame({ vocabs, unitNum }) {
   ════════════════════════════════════════════════════════ */
   if (phase === 'ready') {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-5 gap-5 overflow-y-auto"
+      <div className="flex-1 flex flex-col items-center justify-center p-5 gap-5 overflow-y-auto [&>*]:shrink-0"
            style={{ background:'rgba(7,13,26,0.97)' }}>
         <div className="text-center animate-floatY">
           <div className="text-6xl mb-2">🖊️</div>
@@ -521,7 +527,7 @@ export default function SentenceBuilderGame({ vocabs, unitNum }) {
         </div>
 
         <p className="text-xs font-mono" style={{ color:'rgba(0,212,255,0.35)' }}>
-          共 {Math.min(10, vocabs.filter(v => v.example).length)} 道题
+          共 {Math.min(15, vocabs.filter(v => v.example && v.example.length > v.hanzi.length + 3).length)} 道题
         </p>
 
         <button onClick={startGame} className="neon-cta w-full max-w-sm text-xl py-4">
@@ -540,7 +546,7 @@ export default function SentenceBuilderGame({ vocabs, unitNum }) {
     const stars = pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0
     const msgs  = ['继续加油！','做得好！','非常棒！','完美！太厉害了！']
     return (
-      <div className="flex-1 flex flex-col items-center justify-start p-5 gap-4 overflow-y-auto"
+      <div className="flex-1 flex flex-col items-center justify-start p-5 gap-4 overflow-y-auto [&>*]:shrink-0"
            style={{ background:'rgba(7,13,26,0.97)' }}>
         <div className="text-center pt-2">
           <div className="flex justify-center gap-3 text-5xl mb-3">

@@ -1,67 +1,64 @@
-// Direct HTTP to Gemini API — no SDK needed, Node 18+ fetch built-in
+// Claude-powered 词语老师 chat API
+// Uses the same ANTHROPIC_API_KEY already set for check-meaning.js
+
+import Anthropic from '@anthropic-ai/sdk'
+
+const MAX_MESSAGES = 20   // max conversation history length
+const MAX_MSG_LEN  = 600  // max characters per individual message
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  // Strip BOM / whitespace that PowerShell sometimes injects
-  const apiKey = (process.env.GEMINI_API_KEY || '').replace(/^﻿/, '').trim()
+  const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim()
   if (!apiKey) return res.status(500).json({ error: 'NO_API_KEY' })
 
-  const { messages, systemPrompt } = req.body
-  if (!messages?.length) return res.status(400).json({ error: 'Invalid request' })
+  const { messages, systemPrompt } = req.body || {}
 
-  // SSE headers
-  res.setHeader('Content-Type', 'text/event-stream')
-  res.setHeader('Cache-Control', 'no-cache, no-transform')
+  // ── Input validation ─────────────────────────────────────────────
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: 'Invalid request: messages must be a non-empty array' })
+  }
+  if (messages.length > MAX_MESSAGES) {
+    return res.status(400).json({ error: `Too many messages: max ${MAX_MESSAGES}` })
+  }
+  if (typeof systemPrompt !== 'string') {
+    return res.status(400).json({ error: 'Invalid request: systemPrompt must be a string' })
+  }
+
+  // Sanitise: enforce role whitelist + truncate oversized content
+  const sanitised = messages
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant'))
+    .map(m => ({
+      role:    m.role,
+      content: String(m.content || '').slice(0, MAX_MSG_LEN),
+    }))
+
+  if (sanitised.length === 0) {
+    return res.status(400).json({ error: 'No valid messages after sanitisation' })
+  }
+
+  // ── Stream response headers ──────────────────────────────────────
+  res.setHeader('Content-Type',     'text/event-stream')
+  res.setHeader('Cache-Control',    'no-cache, no-transform')
   res.setHeader('X-Accel-Buffering', 'no')
 
   try {
-    // gemini-2.5-flash: latest, works on free tier
-    const model   = 'gemini-2.5-flash'
-    const url     = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`
+    const client = new Anthropic({ apiKey })
 
-    const contents = messages.map(m => ({
-      role:  m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
-    }))
-
-    const geminiRes = await fetch(url, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemPrompt }] },
-        contents,
-        generationConfig: { maxOutputTokens: 900 },
-      }),
+    const stream = client.messages.stream({
+      model:      'claude-haiku-4-5',
+      max_tokens: 900,
+      system:     systemPrompt,
+      messages:   sanitised,
     })
 
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.json().catch(() => ({}))
-      throw new Error(errBody?.error?.message || `HTTP ${geminiRes.status}`)
-    }
-
-    // Proxy Gemini SSE → our SSE, extracting text deltas
-    const reader  = geminiRes.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer    = ''
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() // keep incomplete last line
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue
-        const payload = line.slice(6).trim()
-        if (!payload || payload === '[DONE]') continue
-        try {
-          const chunk = JSON.parse(payload)
-          const text  = chunk.candidates?.[0]?.content?.parts?.[0]?.text
-          if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`)
-        } catch { /* skip malformed */ }
+    for await (const chunk of stream) {
+      if (
+        chunk.type === 'content_block_delta' &&
+        chunk.delta?.type === 'text_delta' &&
+        chunk.delta.text
+      ) {
+        res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`)
       }
     }
 
@@ -70,10 +67,22 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('[chat api error]', err.message)
+
+    const isRateLimit = err.status === 429 || /rate.?limit|overloaded/i.test(err.message || '')
+    const isTimeout   = err.name === 'AbortError' || /timeout/i.test(err.message || '')
+
     if (!res.headersSent) {
-      res.status(500).json({ error: '连接失败，请稍后再试' })
+      if (isRateLimit) {
+        return res.status(429).json({ error: 'QUOTA_EXCEEDED', retryAfter: 30 })
+      }
+      return res.status(isTimeout ? 504 : 500).json({
+        error: isTimeout ? 'TIMEOUT' : 'NETWORK_ERROR',
+      })
     } else {
-      res.write(`data: ${JSON.stringify({ error: '连接失败，请稍后再试' })}\n\n`)
+      const msg = isRateLimit ? '老师很忙，请等一会儿再问我吧 😊'
+                : isTimeout   ? '请求超时，请重试'
+                :               '连接中断，请重试'
+      res.write(`data: ${JSON.stringify({ error: msg })}\n\n`)
       res.end()
     }
   }

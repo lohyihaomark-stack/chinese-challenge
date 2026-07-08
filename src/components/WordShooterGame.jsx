@@ -19,6 +19,16 @@ function shuffle(arr) {
 function rand(min, max) { return min + Math.random() * (max - min) }
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)) }
 
+/* ── Cycle queues: ensures every vocab is shown before repeating ── */
+const _shooterQueues = new Map()
+function getNextVocab(pool, unitKey) {
+  if (!pool || pool.length === 0) return null
+  if (!_shooterQueues.has(unitKey) || _shooterQueues.get(unitKey).length === 0) {
+    _shooterQueues.set(unitKey, shuffle([...pool]))
+  }
+  return _shooterQueues.get(unitKey).shift()
+}
+
 const PLAYER_MAX_HP   = 4
 const PLAYER_Y        = 88
 const BULLET_SPEED    = 95
@@ -139,7 +149,8 @@ export default function WordShooterGame({ vocabs, unitNum }) {
     const pool = qType === 'cloze' ? cloze : vocabs
     if (pool.length === 0) return
 
-    const correct = pool[Math.floor(Math.random() * pool.length)]
+    const queueKey = `u${unitNum}_${qType === 'cloze' ? 'cloze' : 'all'}`
+    const correct = getNextVocab(pool, queueKey)
     const distractors = shuffle(vocabs.filter(v => v.id !== correct.id && v.hanzi !== correct.hanzi))
                           .slice(0, Math.max(0, arch.optionCount - 1))
     const all = shuffle([correct, ...distractors])
@@ -259,6 +270,9 @@ export default function WordShooterGame({ vocabs, unitNum }) {
 
   /* ── Start game ── */
   const startGame = () => {
+    // Reset cycle queues so a new game always reshuffles the vocab order
+    _shooterQueues.delete(`u${unitNum}_all`)
+    _shooterQueues.delete(`u${unitNum}_cloze`)
     G.hp = PLAYER_MAX_HP; G.score = 0; G.combo = 0; G.bestCombo = 0; G.bombs = 3
     G.killed = 0; G.qIdx = 0; G.playerX = 50; G.targetX = 50
     G.firing = false; G.lastShot = 0

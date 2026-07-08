@@ -57,6 +57,302 @@ function computeEngagement(student) {
   return Math.round(recency * 50 + streakF * 25 + masteryF * 25)
 }
 
+function xpVelocity(student) {
+  return Math.round((student.xp || 0) / Math.max(student.totalLogins || 1, 1))
+}
+
+function masteryColor(rate) {
+  if (rate === null || rate === undefined) return 'rgba(200,220,255,0.25)'
+  return rate >= 70 ? '#06d6a0' : rate >= 50 ? '#ffd60a' : '#f72585'
+}
+
+/* ── WordBubble for heatmap ── */
+function WordBubble({ vocab, entry }) {
+  const [hover, setHover] = useState(false)
+  let bg, border, glow = ''
+  if (!entry || !entry.seen) {
+    bg = 'rgba(200,220,255,0.06)'; border = 'rgba(200,220,255,0.1)'
+  } else {
+    const errRate = Math.round(((entry.wrong || 0) / entry.seen) * 100)
+    const mastered = entry.seen >= 3 && errRate < 10
+    if (mastered)        { bg = 'rgba(6,214,160,0.22)';  border = '#06d6a0'; glow = '0 0 8px rgba(6,214,160,0.6)' }
+    else if (errRate >= 60) { bg = 'rgba(247,37,133,0.22)'; border = '#f72585' }
+    else if (errRate >= 30) { bg = 'rgba(255,214,10,0.22)'; border = '#ffd60a' }
+    else                 { bg = 'rgba(0,212,255,0.18)';   border = '#00d4ff' }
+  }
+  const errPct = entry?.seen ? Math.round(((entry.wrong||0)/entry.seen)*100) : null
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      title={entry?.seen
+        ? `${vocab.hanzi} ${vocab.pinyin}\n见 ${entry.seen} 次 · 错 ${entry.wrong||0} 次 · 错误率 ${errPct}%`
+        : `${vocab.hanzi} — 未练习`}
+      style={{
+        width: 30, height: 30, borderRadius: 6, cursor: 'default',
+        background: bg, border: `1px solid ${border}`,
+        boxShadow: hover ? (glow || `0 0 6px ${border}55`) : glow,
+        transition: 'box-shadow .15s',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 11, fontWeight: 700, color: 'rgba(200,220,255,0.7)',
+      }}>
+      {entry?.seen && errPct !== null ? (errPct > 0 ? errPct : '✓') : ''}
+    </div>
+  )
+}
+
+/* ── StudentModal ── */
+function StudentModal({ student, onClose, xpRank, total }) {
+  const [innerTab, setInnerTab] = useState('overview')
+  const lvl    = getLevelInfo(student.xp || 0)
+  const mRate  = computeMasteryRate(student)
+  const engage = computeEngagement(student)
+  const velocity = xpVelocity(student)
+
+  const totalVocabs = ALL_UNITS.reduce((s, u) => s + u.vocabs.length, 0)
+  let totalSeen = 0
+  ALL_UNITS.forEach((unit, i) => {
+    const m = student.wordMastery?.[String(i+1)] || {}
+    totalSeen += unit.vocabs.filter(v => (m[String(v.id)]?.seen || 0) > 0).length
+  })
+
+  const coveragePct = Math.round((totalSeen / totalVocabs) * 100)
+  const engColor = engage >= 70 ? '#06d6a0' : engage >= 40 ? '#ffd60a' : '#f72585'
+  const da = daysAgo(student.lastSeen)
+
+  const INNER_TABS = [
+    { id: 'overview', label: '📊 概况' },
+    { id: 'vocab',    label: '📖 词汇地图' },
+    { id: 'games',    label: '🎮 游戏成绩' },
+    { id: 'ach',      label: '🏆 成就' },
+  ]
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+    }} onClick={onClose}>
+      <div style={{
+        width: 'min(900px, 96vw)', maxHeight: '90vh', borderRadius: 20, overflow: 'hidden',
+        background: 'rgba(8,14,32,0.98)', border: '1px solid rgba(255,214,10,0.25)',
+        boxShadow: '0 0 60px rgba(255,214,10,0.12)', display: 'flex', flexDirection: 'column',
+      }} onClick={e => e.stopPropagation()}>
+
+        {/* Modal header */}
+        <div style={{ padding: '16px 22px', background: 'rgba(255,214,10,0.06)', borderBottom: '1px solid rgba(255,214,10,0.15)',
+                      display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+          <span style={{ fontSize: 44 }}>{lvl.current.emoji}</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 28, fontWeight: 900, color: '#e8f4ff', lineHeight: 1.1 }}>{student.name}</p>
+            <p style={{ fontSize: 18, color: lvl.current.color, fontFamily: 'monospace', marginTop: 3 }}>
+              Lv.{lvl.current.level} {lvl.current.title} · {xpRank + 1}/{total} 名
+            </p>
+          </div>
+          <button onClick={onClose} style={{
+            fontSize: 26, width: 42, height: 42, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(200,220,255,0.5)', cursor: 'pointer',
+          }}>×</button>
+        </div>
+
+        {/* Inner tab bar */}
+        <div style={{ display: 'flex', gap: 4, padding: '10px 14px', background: 'rgba(0,0,0,0.2)', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          {INNER_TABS.map(t => (
+            <button key={t.id} onClick={() => setInnerTab(t.id)} style={{
+              flex: 1, padding: '12px 8px', borderRadius: 10, fontSize: 17, fontWeight: 800, cursor: 'pointer',
+              background: innerTab === t.id ? 'rgba(0,212,255,0.14)' : 'transparent',
+              color: innerTab === t.id ? '#00d4ff' : 'rgba(200,220,255,0.4)',
+              border: innerTab === t.id ? '1px solid rgba(0,212,255,0.35)' : '1px solid transparent',
+              transition: 'all .12s',
+            }}>{t.label}</button>
+          ))}
+        </div>
+
+        {/* Modal body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
+
+          {/* ── 概况 ── */}
+          {innerTab === 'overview' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* XP level bar */}
+              <div style={{ borderRadius: 14, padding: '16px 20px', background: 'rgba(255,214,10,0.05)', border: '1px solid rgba(255,214,10,0.15)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
+                  <span style={{ fontSize: 20, color: lvl.current.color, fontWeight: 900 }}>
+                    {lvl.current.emoji} Lv.{lvl.current.level} {lvl.current.title}
+                  </span>
+                  <span style={{ fontSize: 16, color: 'rgba(200,220,255,0.35)', fontFamily: 'monospace' }}>
+                    {lvl.xpIntoLevel.toLocaleString()} / {lvl.xpForLevel.toLocaleString()} XP
+                  </span>
+                </div>
+                <MiniBar value={lvl.pct} max={100} color={lvl.current.color} height={10} />
+                {lvl.next && (
+                  <p style={{ fontSize: 15, color: 'rgba(200,220,255,0.28)', marginTop: 5, textAlign: 'right' }}>
+                    距下一级 {lvl.next.emoji}{lvl.next.title} 还差 {(lvl.xpForLevel - lvl.xpIntoLevel).toLocaleString()} XP
+                  </p>
+                )}
+              </div>
+
+              {/* 12-stat grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 10 }}>
+                {[
+                  ['🎯', '掌握率',     mRate !== null ? `${mRate}%` : '—',           masteryColor(mRate)],
+                  ['⚡', '参与分',     `${engage} / 100`,                             engColor],
+                  ['💡', 'XP 效率',    `${velocity.toLocaleString()} XP/次`,          '#c084fc'],
+                  ['📅', '总登录',     `${(student.totalLogins||1)} 次`,             '#00d4ff'],
+                  ['🔥', '当前连续',   `${student.streak||1} 天`,                    student.streak>=7?'#06d6a0':student.streak>=3?'#ffd60a':'#f72585'],
+                  ['🏅', '最长连续',   `${student.longestStreak||1} 天`,             '#ffd60a'],
+                  ['📖', '词汇覆盖',   `${totalSeen}/${totalVocabs} (${coveragePct}%)`,'#9b5de5'],
+                  ['🧊', '护盾余量',   `${student.streakFreezes??2} 次`,             '#60a5fa'],
+                  ['🪙', '金币',       `${(student.coins||0).toLocaleString()}`,     '#ffd60a'],
+                  ['📆', '最后登录',   da===0?'今天':da===1?'昨天':`${da}天前`,       da>3?'#f72585':'#06d6a0'],
+                  ['🏆', '成就数',     `${(student.achievements||[]).length}/${ACH_DEF.length}`, '#c084fc'],
+                  ['🥇', 'XP 排名',    `第 ${xpRank+1} 名`,                          xpRank===0?'#ffd60a':xpRank<=2?'#c0c0c0':'rgba(200,220,255,0.5)'],
+                ].map(([em, label, val, col]) => (
+                  <div key={label} style={{
+                    borderRadius: 12, padding: '13px 16px',
+                    background: 'rgba(255,255,255,0.03)', border: `1px solid ${col}22`,
+                    display: 'flex', flexDirection: 'column', gap: 4,
+                  }}>
+                    <span style={{ fontSize: 15, color: 'rgba(200,220,255,0.4)', fontWeight: 700 }}>{em} {label}</span>
+                    <span style={{ fontSize: 22, fontWeight: 900, color: col }}>{val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── 词汇地图 ── */}
+          {innerTab === 'vocab' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* legend */}
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', fontSize: 15 }}>
+                {[
+                  ['rgba(200,220,255,0.06)','rgba(200,220,255,0.1)','未练习'],
+                  ['rgba(247,37,133,0.22)','#f72585','错误 ≥60%'],
+                  ['rgba(255,214,10,0.22)','#ffd60a','错误 30–59%'],
+                  ['rgba(0,212,255,0.18)','#00d4ff','错误 <30%'],
+                  ['rgba(6,214,160,0.22)','#06d6a0','已掌握 ✓'],
+                ].map(([bg,bdr,lbl]) => (
+                  <div key={lbl} style={{ display:'flex', alignItems:'center', gap:5 }}>
+                    <div style={{ width:16, height:16, borderRadius:3, background:bg, border:`1px solid ${bdr}` }} />
+                    <span style={{ color:'rgba(200,220,255,0.45)' }}>{lbl}</span>
+                  </div>
+                ))}
+              </div>
+              {ALL_UNITS.map((unit, i) => {
+                const unitNum = String(i+1)
+                const m = student.wordMastery?.[unitNum] || {}
+                const seenCount = unit.vocabs.filter(v => (m[String(v.id)]?.seen||0)>0).length
+                return (
+                  <div key={unitNum} style={{ borderRadius: 13, padding: '14px 16px', background: `${UNIT_HEX[i]}08`, border: `1px solid ${UNIT_HEX[i]}22` }}>
+                    <p style={{ fontSize: 18, fontWeight: 900, color: UNIT_HEX[i], marginBottom: 10 }}>
+                      单元{UNIT_LABELS[i]}《{unit.title}》
+                      <span style={{ fontSize: 15, color: 'rgba(200,220,255,0.35)', marginLeft: 12, fontWeight: 400 }}>
+                        已练 {seenCount}/{unit.vocabs.length}
+                      </span>
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {unit.vocabs.map(v => {
+                        const entry = m[String(v.id)]
+                        return <WordBubble key={v.id} vocab={v} entry={entry} />
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* ── 游戏成绩 ── */}
+          {innerTab === 'games' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {ALL_UNITS.map((unit, i) => {
+                const n = String(i+1)
+                const boss = student.bossScores?.[n]
+                const match = student.matchHighPct?.[n]
+                const combat = student.combatProgress?.[n]
+                const stars = boss?.cleared ? (3 - (boss.bestMistakes||0)) : 0
+                return (
+                  <div key={n} style={{ borderRadius: 13, padding: '16px 18px', background: `${UNIT_HEX[i]}08`, border: `1px solid ${UNIT_HEX[i]}25` }}>
+                    <p style={{ fontSize: 20, fontWeight: 900, color: UNIT_HEX[i], marginBottom: 12 }}>
+                      单元{UNIT_LABELS[i]}《{unit.title}》
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 8 }}>
+                      {/* Boss */}
+                      <div style={{ borderRadius: 10, padding: '10px 14px', background: boss?.cleared?'rgba(255,107,53,0.1)':'rgba(255,255,255,0.02)', border:`1px solid ${boss?.cleared?'rgba(255,107,53,0.35)':'rgba(255,255,255,0.07)'}` }}>
+                        <p style={{ fontSize: 14, color:'rgba(200,220,255,0.38)', marginBottom:5 }}>⚔️ 词语对战</p>
+                        {boss?.cleared
+                          ? <p style={{ fontSize: 22, fontWeight:900, color:'#ff6b35' }}>{'★'.repeat(stars)}{'☆'.repeat(3-stars)}</p>
+                          : <p style={{ fontSize: 18, color:'rgba(200,220,255,0.2)' }}>未通关</p>}
+                        {boss?.cleared && <p style={{ fontSize: 14, color:'rgba(200,220,255,0.3)', fontFamily:'monospace', marginTop:3 }}>失误 {boss.bestMistakes||0} 次</p>}
+                      </div>
+                      {/* Match */}
+                      <div style={{ borderRadius: 10, padding: '10px 14px', background: match!=null?'rgba(155,93,229,0.1)':'rgba(255,255,255,0.02)', border:`1px solid ${match!=null?'rgba(155,93,229,0.35)':'rgba(255,255,255,0.07)'}` }}>
+                        <p style={{ fontSize: 14, color:'rgba(200,220,255,0.38)', marginBottom:5 }}>🔗 词义配对</p>
+                        {match!=null
+                          ? <p style={{ fontSize: 22, fontWeight:900, color:'#9b5de5' }}>{match}%</p>
+                          : <p style={{ fontSize: 18, color:'rgba(200,220,255,0.2)' }}>未游玩</p>}
+                      </div>
+                      {/* Combat tiers */}
+                      {[['🥉','学徒','apprentice','#cd7f32'],['🥈','武士','warrior','#c0c0c0'],['🥇','宗师','grandmaster','#ffd60a']].map(([em,lbl,key,col]) => {
+                        const cleared = combat?.[key]?.cleared
+                        return (
+                          <div key={key} style={{ borderRadius: 10, padding: '10px 14px', background: cleared?`${col}15`:'rgba(255,255,255,0.02)', border:`1px solid ${cleared?`${col}40`:'rgba(255,255,255,0.07)'}` }}>
+                            <p style={{ fontSize: 14, color:'rgba(200,220,255,0.38)', marginBottom:5 }}>{em} {lbl}关卡</p>
+                            <p style={{ fontSize: 22 }}>{cleared ? '✅' : '⬜'}</p>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* ── 成就 ── */}
+          {innerTab === 'ach' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {ACH_DEF.map(a => {
+                const has = (student.achievements || []).includes(a.id)
+                // Progress hints
+                let hint = ''
+                if (!has) {
+                  if (a.id==='streak3')      hint = `当前 ${student.streak||1} 天，还差 ${Math.max(0,3-(student.streak||1))} 天`
+                  else if (a.id==='streak7') hint = `当前 ${student.streak||1} 天，还差 ${Math.max(0,7-(student.streak||1))} 天`
+                  else if (a.id==='streak30')hint = `最长 ${student.longestStreak||1} 天，还差 ${Math.max(0,30-(student.longestStreak||1))} 天`
+                  else if (a.id==='match_ace'){
+                    const best = Math.max(0,...Object.values(student.matchHighPct||{}))
+                    hint = `最高 ${best}%，距 90% 还差 ${Math.max(0,90-best)}%`
+                  } else if (a.id==='boss_all') {
+                    const cleared = Object.values(student.bossScores||{}).filter(b=>b?.cleared).length
+                    hint = `已通关 ${cleared}/6 个单元`
+                  }
+                }
+                return (
+                  <div key={a.id} style={{
+                    borderRadius: 13, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14,
+                    background: has?'rgba(255,214,10,0.07)':'rgba(255,255,255,0.02)',
+                    border: `1px solid ${has?'rgba(255,214,10,0.3)':'rgba(255,255,255,0.06)'}`,
+                  }}>
+                    <span style={{ fontSize: 32, filter: has?'none':'grayscale(1)', opacity: has?1:0.3 }}>{a.emoji}</span>
+                    <div style={{ flex:1 }}>
+                      <p style={{ fontSize: 20, fontWeight: 900, color: has?'#ffd60a':'rgba(200,220,255,0.3)' }}>{a.label}</p>
+                      <p style={{ fontSize: 16, color: 'rgba(200,220,255,0.35)', marginTop: 3 }}>{a.desc}</p>
+                      {hint && <p style={{ fontSize: 15, color: 'rgba(0,212,255,0.5)', marginTop:4, fontFamily:'monospace' }}>📍 {hint}</p>}
+                    </div>
+                    <span style={{ fontSize: 26 }}>{has ? '✅' : '🔒'}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ── small reusable pieces ── */
 const C = {
   card:    { background: 'rgba(255,255,255,0.03)', borderRadius: 14 },
@@ -118,7 +414,7 @@ function SortBtn({ label, active, onClick }) {
 }
 
 /* ── Expandable student row ── */
-function StudentRow({ student, rank }) {
+function StudentRow({ student, rank, onNameClick }) {
   const [open, setOpen] = useState(false)
   const lvl    = getLevelInfo(student.xp || 0)
   const da     = daysAgo(student.lastSeen)
@@ -161,7 +457,10 @@ function StudentRow({ student, rank }) {
             <span style={{ fontSize: 22, fontWeight: 900, color: rankColor, minWidth: 28, textAlign: 'center' }}>{rank + 1}</span>
             <span style={{ fontSize: 38 }}>{lvl.current.emoji}</span>
             <div>
-              <p style={{ fontWeight: 900, fontSize: 26, color: inactive ? 'rgba(220,240,255,0.4)' : '#e8f4ff', lineHeight: 1.2 }}>
+              <p
+                onClick={onNameClick ? e => { e.stopPropagation(); onNameClick() } : undefined}
+                style={{ fontWeight: 900, fontSize: 26, color: inactive ? 'rgba(220,240,255,0.4)' : '#e8f4ff', lineHeight: 1.2,
+                         ...(onNameClick ? { textDecoration: 'underline dotted', cursor: 'pointer' } : {}) }}>
                 {student.name}
               </p>
               <p style={{ fontSize: 16, color: lvl.current.color, fontFamily: 'monospace', marginTop: 3 }}>
@@ -364,6 +663,10 @@ export default function TeacherDashboard({ onClose }) {
   const [expandedWord,  setExpandedWord]  = useState(null)
   const [showAtRisk,    setShowAtRisk]    = useState(true)
   const [showInactive,  setShowInactive]  = useState(true)
+  const [selectedStudent, setSelectedStudent] = useState(null)
+  const [autoRefresh,   setAutoRefresh]   = useState(false)
+  const [hmUnit,        setHmUnit]        = useState(1)
+  const [showStreakRisk, setShowStreakRisk] = useState(true)
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null)
@@ -380,6 +683,13 @@ export default function TeacherDashboard({ onClose }) {
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  /* auto-refresh every 60 s */
+  useEffect(() => {
+    if (!autoRefresh) return
+    const id = setInterval(fetchData, 60000)
+    return () => clearInterval(id)
+  }, [autoRefresh, fetchData])
 
   /* ── Overview stats ── */
   const total        = students.length
@@ -539,6 +849,62 @@ export default function TeacherDashboard({ onClose }) {
       .slice(0, 15)
   }, [students, wordSearch])
 
+  /* ── Streak at risk (active streak, not logged in today) ── */
+  const streakAtRisk = useMemo(() =>
+    students.filter(s => (s.streak || 1) > 1 && daysAgo(s.lastSeen) > 0)
+  , [students])
+
+  /* ── XP rank map ── */
+  const xpRankMap = useMemo(() => {
+    const sorted = [...students].sort((a,b) => (b.xp||0)-(a.xp||0))
+    const map = {}; sorted.forEach((s,i) => { map[s.name] = i }); return map
+  }, [students])
+
+  /* ── Per-unit average mastery rate ── */
+  const unitMasteryRates = useMemo(() => ALL_UNITS.map((unit, i) => {
+    const unitNum = String(i+1)
+    let ts = 0, tc = 0
+    students.forEach(s => {
+      const m = s.wordMastery?.[unitNum] || {}
+      unit.vocabs.forEach(v => { const e = m[String(v.id)]; if (e?.seen) { ts += e.seen; tc += e.correct||0 } })
+    })
+    return { unitNum: i+1, title: unit.title, rate: ts>0 ? Math.round((tc/ts)*100) : null }
+  }), [students])
+
+  /* ── Class health score 0-100 ── */
+  const classHealth = useMemo(() => {
+    if (!students.length) return null
+    const activityScore = (students.filter(s => daysAgo(s.lastSeen)<=6).length/students.length)*100
+    const masteryScore  = classMastery ?? 50
+    const avgEngage     = students.reduce((s,st) => s+computeEngagement(st), 0)/students.length
+    const totalVocabs   = ALL_UNITS.reduce((s,u) => s+u.vocabs.length, 0)
+    const avgCoverage   = students.reduce((acc,st) => {
+      let seen=0
+      ALL_UNITS.forEach((u,i) => { const m=st.wordMastery?.[String(i+1)]||{}; seen+=u.vocabs.filter(v=>(m[String(v.id)]?.seen||0)>0).length })
+      return acc+(seen/totalVocabs)*100
+    }, 0)/students.length
+    const score = Math.round(activityScore*0.35 + masteryScore*0.30 + avgEngage*0.25 + avgCoverage*0.10)
+    const grade = score>=80?'A':score>=65?'B':score>=50?'C':'D'
+    const color = score>=80?'#06d6a0':score>=65?'#ffd60a':score>=50?'#ff6b35':'#f72585'
+    return { score, grade, color }
+  }, [students, classMastery])
+
+  /* ── export CSV ── */
+  function exportCSV() {
+    const headers = ['姓名','XP','连续天','最长连续','总登录','XP效率','掌握率%','参与分','最后登录','成就数']
+    const rows = filteredStudents.map(s => {
+      const mr = computeMasteryRate(s) ?? ''
+      return [s.name, s.xp||0, s.streak||1, s.longestStreak||1, s.totalLogins||1,
+              xpVelocity(s), mr, computeEngagement(s), fmtDate(s.lastSeen), (s.achievements||[]).length]
+    })
+    const csv = [headers,...rows].map(r=>r.join(',')).join('\n')
+    const blob = new Blob(['﻿'+csv], { type:'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href=url; a.download=`班级数据_${new Date().toISOString().slice(0,10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
+
   /* ── helpers ── */
   const CellPct = ({ u, i }) => {
     const col = u.pct >= 70 ? '#06d6a0' : u.pct >= 30 ? '#ffd60a' : u.pct > 0 ? '#ff6b35' : 'rgba(200,220,255,0.12)'
@@ -559,11 +925,13 @@ export default function TeacherDashboard({ onClose }) {
     { id: 'hardwords',  label: '🔴 难词分析' },
     { id: 'coverage',   label: '📊 单元覆盖' },
     { id: 'trends',     label: '📈 班级概况' },
+    { id: 'heatmap',    label: '🗺️ 掌握热图' },
     { id: 'wordsearch', label: '🔍 词语搜索' },
   ]
 
   /* ══════════════ RENDER ══════════════ */
   return (
+    <>
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column',
                   overflow: 'hidden', background: 'rgba(3,6,16,0.98)', backdropFilter: 'blur(22px)' }}>
 
@@ -583,6 +951,20 @@ export default function TeacherDashboard({ onClose }) {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => setAutoRefresh(v => !v)} style={{
+            fontSize: 16, padding: '11px 18px', borderRadius: 12, fontWeight: 800, cursor: 'pointer',
+            background: autoRefresh ? 'rgba(6,214,160,0.14)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${autoRefresh ? 'rgba(6,214,160,0.4)' : 'rgba(255,255,255,0.12)'}`,
+            color: autoRefresh ? '#06d6a0' : 'rgba(200,220,255,0.35)',
+          }}>
+            🔄 {autoRefresh ? '自动刷新 ON' : '自动刷新 OFF'}
+          </button>
+          <button onClick={() => exportCSV()} style={{
+            fontSize: 16, padding: '11px 18px', borderRadius: 12, fontWeight: 800, cursor: 'pointer',
+            background: 'rgba(255,214,10,0.07)', border: '1px solid rgba(255,214,10,0.25)', color: '#ffd60a',
+          }}>
+            📥 导出 CSV
+          </button>
           <button onClick={fetchData} disabled={loading} style={{
             fontSize: 18, padding: '11px 22px', borderRadius: 12, fontWeight: 800, cursor: 'pointer',
             background: 'rgba(0,212,255,0.09)', border: '1px solid rgba(0,212,255,0.28)', color: '#00d4ff',
@@ -621,6 +1003,12 @@ export default function TeacherDashboard({ onClose }) {
                     color={classMastery === null ? '#9ca3af' : classMastery >= 70 ? '#06d6a0' : classMastery >= 50 ? '#ffd60a' : '#f72585'} />
           <StatCard emoji="⚠️" label="需关注"    value={needAttn.length}
                     color={needAttn.length === 0 ? '#06d6a0' : '#f72585'} />
+          {classHealth && (
+            <StatCard emoji="❤️" label="班级健康度"
+                      value={`${classHealth.score}`}
+                      color={classHealth.color}
+                      sub={`等级 ${classHealth.grade}`} />
+          )}
         </div>
 
         {/* ── Alert: inactive ── */}
@@ -674,6 +1062,30 @@ export default function TeacherDashboard({ onClose }) {
           </div>
         )}
 
+        {/* ── Alert: streak at risk ── */}
+        {streakAtRisk.length > 0 && (
+          <div style={{ borderRadius: 16, padding: '14px 18px', background: 'rgba(255,214,10,0.06)', border: '1px solid rgba(255,214,10,0.22)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showStreakRisk ? 12 : 0 }}>
+              <p style={{ fontSize: 22, fontWeight: 900, color: '#ffd60a' }}>
+                🔥 {streakAtRisk.length} 位同学今日未登录，连续天数面临中断
+              </p>
+              <button onClick={() => setShowStreakRisk(v => !v)}
+                      style={{ fontSize: 18, color: 'rgba(255,214,10,0.7)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
+                {showStreakRisk ? '收起 ▲' : '展开 ▼'}
+              </button>
+            </div>
+            {showStreakRisk && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {streakAtRisk.sort((a,b)=>(b.streak||1)-(a.streak||1)).map(s => (
+                  <Pill key={s.name} color="#ffd60a">
+                    {s.name} · 🔥{s.streak||1} 天 · {daysAgo(s.lastSeen)} 天未登录
+                  </Pill>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── Tabs ── */}
         <div style={{ display: 'flex', gap: 5, borderRadius: 16, padding: 5, overflowX: 'auto', flexShrink: 0,
                       background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.1)' }}>
@@ -717,7 +1129,7 @@ export default function TeacherDashboard({ onClose }) {
                 <SortBtn key={id} label={label} active={sortBy === id} onClick={() => setSortBy(id)} />
               ))}
               <span style={{ marginLeft: 'auto', fontSize: 18, fontFamily: 'monospace', color: 'rgba(200,220,255,0.35)' }}>
-                {filteredStudents.length} 人 · 点击行查看详情
+                {filteredStudents.length} 人 · 点击名字查看详情
               </span>
             </div>
 
@@ -742,7 +1154,8 @@ export default function TeacherDashboard({ onClose }) {
                       {search ? `没有名字包含"${search}"的学生` : '还没有学生数据，学生登录后自动同步。'}
                     </td></tr>
                   ) : filteredStudents.map((s, i) => (
-                    <StudentRow key={s.name} student={s} rank={i} />
+                    <StudentRow key={s.name} student={s} rank={i}
+                      onNameClick={() => setSelectedStudent(s)} />
                   ))}
                 </tbody>
               </table>
@@ -772,6 +1185,29 @@ export default function TeacherDashboard({ onClose }) {
                 <SortBtn key={id} label={label} active={hardSort === id} onClick={() => setHardSort(id)} />
               ))}
             </div>
+
+            {/* Smart focus section */}
+            {hardWords.length > 0 && (
+              <div style={{ borderRadius: 14, padding: '14px 18px', background: 'rgba(247,37,133,0.06)', border: '1px solid rgba(247,37,133,0.2)', marginBottom: 6 }}>
+                <p style={{ fontSize: 20, fontWeight: 900, color: '#f72585', marginBottom: 10 }}>🎯 重点推荐 — 高影响力词语（错误人数最多）</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  {[...hardWords].sort((a,b) => b.studentCount - a.studentCount).slice(0,5).map(w => {
+                    const pct = Math.round((w.totalWrong/w.totalSeen)*100)
+                    return (
+                      <div key={w.id} onClick={() => setExpandedWord(String(w.id))}
+                           style={{ borderRadius: 12, padding: '10px 16px', cursor: 'pointer',
+                                     background: 'rgba(247,37,133,0.09)', border: '1px solid rgba(247,37,133,0.28)' }}>
+                        <p style={{ fontSize: 22, fontWeight: 900, color: '#e8f4ff' }}>{w.hanzi}</p>
+                        <p style={{ fontSize: 15, color: '#f72585', fontFamily: 'monospace' }}>
+                          {w.studentCount} 人困难 · {pct}% 错误率
+                        </p>
+                        <p style={{ fontSize: 14, color: 'rgba(200,220,255,0.35)', marginTop: 2 }}>{w.definition}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {hardWords.length === 0 ? (
               <p style={{ textAlign: 'center', padding: 48, color: 'rgba(200,220,255,0.3)', fontSize: 20 }}>
@@ -1053,6 +1489,135 @@ export default function TeacherDashboard({ onClose }) {
               </div>
             )}
 
+            {/* ── Unit mastery comparison bars ── */}
+            <div style={{ borderRadius: 14, padding: 16, background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.1)' }}>
+              <p style={{ fontSize: 22, fontWeight: 900, color: '#00d4ff', marginBottom: 14 }}>📊 各单元掌握率对比</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {unitMasteryRates.map((u, i) => (
+                  <div key={u.unitNum} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 17, fontWeight: 700, color: UNIT_HEX[i], minWidth: 90 }}>单元{UNIT_LABELS[i]}</span>
+                    <MiniBar value={u.rate ?? 0} max={100} color={masteryColor(u.rate)} height={14} />
+                    <span style={{ fontSize: 20, fontWeight: 900, color: masteryColor(u.rate), minWidth: 48, textAlign: 'right' }}>
+                      {u.rate !== null ? `${u.rate}%` : '—'}
+                    </span>
+                    <span style={{ fontSize: 15, color: 'rgba(200,220,255,0.3)', minWidth: 90, fontFamily: 'monospace' }}>
+                      《{u.title}》
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ════════ TAB: HEATMAP ════════ */}
+        {tab === 'heatmap' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+            {/* Unit selector */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 18, color: 'rgba(200,220,255,0.4)', fontWeight: 700 }}>单元：</span>
+              {ALL_UNITS.map((u, i) => (
+                <button key={i} onClick={() => setHmUnit(i+1)} style={{
+                  fontSize: 17, padding: '10px 18px', borderRadius: 99, fontWeight: 700, cursor: 'pointer',
+                  background: hmUnit===i+1 ? `${UNIT_HEX[i]}25` : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${hmUnit===i+1 ? UNIT_HEX[i] : 'rgba(255,255,255,0.08)'}`,
+                  color: hmUnit===i+1 ? UNIT_HEX[i] : 'rgba(200,220,255,0.38)',
+                }}>
+                  单元{UNIT_LABELS[i]}
+                </button>
+              ))}
+            </div>
+
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 15, alignItems: 'center' }}>
+              {[
+                ['rgba(200,220,255,0.06)','rgba(200,220,255,0.1)','未练习'],
+                ['rgba(247,37,133,0.22)','#f72585','错误 ≥60%'],
+                ['rgba(255,214,10,0.22)','#ffd60a','错误 30–59%'],
+                ['rgba(0,212,255,0.18)','#00d4ff','错误 <30%'],
+                ['rgba(6,214,160,0.22)','#06d6a0','已掌握（绿光）'],
+              ].map(([bg,bdr,lbl]) => (
+                <div key={lbl} style={{ display:'flex', alignItems:'center', gap:5 }}>
+                  <div style={{ width:16, height:16, borderRadius:3, background:bg, border:`1px solid ${bdr}` }} />
+                  <span style={{ color:'rgba(200,220,255,0.45)' }}>{lbl}</span>
+                </div>
+              ))}
+              <span style={{ color:'rgba(200,220,255,0.28)', marginLeft:'auto', fontSize:14 }}>数字 = 错误率%，✓ = 已练无错</span>
+            </div>
+
+            {/* Heatmap table */}
+            {(() => {
+              const unit = ALL_UNITS[hmUnit-1]
+              const unitColor = UNIT_HEX[hmUnit-1]
+              if (!unit) return null
+              return (
+                <div style={{ borderRadius: 14, overflow: 'auto', border: `1px solid ${unitColor}22` }}>
+                  <table style={{ borderCollapse: 'collapse', minWidth: '100%' }}>
+                    <thead>
+                      <tr style={{ background: `${unitColor}0a`, borderBottom: `1px solid ${unitColor}22` }}>
+                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 17, fontWeight: 700, color: 'rgba(200,220,255,0.5)', minWidth: 100, whiteSpace: 'nowrap' }}>学生</th>
+                        {unit.vocabs.map(v => (
+                          <th key={v.id} title={`${v.hanzi} ${v.pinyin}\n${v.definition}`}
+                              style={{ padding: '8px 3px', textAlign: 'center', fontSize: 13, fontWeight: 700, color: unitColor, minWidth: 36 }}>
+                            <div style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {v.hanzi}
+                            </div>
+                          </th>
+                        ))}
+                        <th style={{ padding: '12px 10px', textAlign: 'center', fontSize: 15, fontWeight: 700, color: 'rgba(200,220,255,0.4)' }}>掌握率</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredStudents.length === 0 ? (
+                        <tr><td colSpan={unit.vocabs.length+2} style={{ padding: 40, textAlign:'center', color:'rgba(200,220,255,0.3)', fontSize:18 }}>暂无学生数据</td></tr>
+                      ) : filteredStudents.map(s => {
+                        const m = s.wordMastery?.[String(hmUnit)] || {}
+                        let ts=0,tc=0
+                        unit.vocabs.forEach(v => { const e=m[String(v.id)]; if(e?.seen){ts+=e.seen;tc+=e.correct||0} })
+                        const unitRate = ts>0 ? Math.round((tc/ts)*100) : null
+                        return (
+                          <tr key={s.name} style={{ borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+                            <td style={{ padding: '6px 14px', fontWeight: 700, fontSize: 17, color: '#e8f4ff', whiteSpace: 'nowrap',
+                                          textDecoration: 'underline dotted', cursor: 'pointer' }}
+                                onClick={() => setSelectedStudent(s)}>
+                              {s.name}
+                            </td>
+                            {unit.vocabs.map(v => (
+                              <td key={v.id} style={{ padding: '4px 3px', textAlign: 'center' }}>
+                                <WordBubble vocab={v} entry={m[String(v.id)]} />
+                              </td>
+                            ))}
+                            <td style={{ padding: '6px 10px', textAlign:'center', fontSize:17, fontWeight:900, color: masteryColor(unitRate) }}>
+                              {unitRate !== null ? `${unitRate}%` : '—'}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ borderTop: `2px solid ${unitColor}25`, background: `${unitColor}06` }}>
+                        <td style={{ padding: '8px 14px', fontWeight: 900, fontSize: 16, color: unitColor }}>班级平均</td>
+                        {unit.vocabs.map(v => {
+                          let ts=0,tw=0
+                          filteredStudents.forEach(s => { const e=s.wordMastery?.[String(hmUnit)]?.[String(v.id)]; if(e?.seen){ts+=e.seen;tw+=e.wrong||0} })
+                          const avg = ts>0 ? { seen:ts, wrong:tw, correct:ts-tw } : null
+                          return (
+                            <td key={v.id} style={{ padding:'4px 3px', textAlign:'center' }}>
+                              <WordBubble vocab={v} entry={avg} />
+                            </td>
+                          )
+                        })}
+                        <td style={{ padding:'8px 10px', textAlign:'center', fontSize:17, fontWeight:900, color: masteryColor(unitMasteryRates[hmUnit-1]?.rate) }}>
+                          {unitMasteryRates[hmUnit-1]?.rate != null ? `${unitMasteryRates[hmUnit-1].rate}%` : '—'}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )
+            })()}
           </div>
         )}
 
@@ -1158,5 +1723,16 @@ export default function TeacherDashboard({ onClose }) {
 
       </div>
     </div>
+
+    {/* ── Student detail modal ── */}
+    {selectedStudent && (
+      <StudentModal
+        student={selectedStudent}
+        onClose={() => setSelectedStudent(null)}
+        xpRank={xpRankMap[selectedStudent.name] ?? 0}
+        total={total}
+      />
+    )}
+    </>
   )
 }

@@ -1,7 +1,7 @@
 import { ACHIEVEMENTS } from '../utils/userStore'
 
-const UNIT_NAMES  = { 1: '单元一', 2: '单元二', 3: '单元三' }
-const BOSS_NAMES  = { 1: '词汇魔王', 2: '年　　兽', 3: '词语狮王' }
+const UNIT_NAMES  = { 1: '单元一', 2: '单元二', 3: '单元三', 4: '单元四', 5: '单元五', 6: '单元六' }
+const BOSS_NAMES  = { 1: '词汇魔王', 2: '年兽', 3: '词语狮王', 4: '习惯魔君', 5: '创新领主', 6: '贡献之神' }
 
 function BossRow({ unitNum, score }) {
   const cleared = score?.cleared
@@ -69,6 +69,13 @@ export default function ProfileModal({ user, onClose }) {
                 <span className="text-brick font-bold text-base">📅 总登录天数</span>
                 <span className="text-brick font-black text-2xl">{user.totalLogins || 1} 天</span>
               </div>
+              <div className="flex items-center justify-between bg-cream-dark rounded-xl px-4 py-3">
+                <div>
+                  <span className="text-brick font-bold text-base">🧊 本月护盾</span>
+                  <p className="text-brick/45 text-xs mt-0.5">缺勤一天自动保护连续登录</p>
+                </div>
+                <span className="text-brick font-black text-2xl">{user.streakFreezes ?? 2} 次</span>
+              </div>
             </div>
           </div>
 
@@ -76,7 +83,7 @@ export default function ProfileModal({ user, onClose }) {
           <div className="p-5 border-b border-cream-dark">
             <p className="text-base font-bold text-brick/40 uppercase tracking-wider mb-3">⚔️ 词语斗争成绩</p>
             <div className="flex flex-col gap-2">
-              {[1, 2, 3].map(n => (
+              {[1, 2, 3, 4, 5, 6].map(n => (
                 <BossRow key={n} unitNum={n} score={user.bossScores?.[String(n)]} />
               ))}
             </div>
@@ -86,7 +93,7 @@ export default function ProfileModal({ user, onClose }) {
           <div className="p-5 border-b border-cream-dark">
             <p className="text-base font-bold text-brick/40 uppercase tracking-wider mb-3">🔗 词义配对最高命中率</p>
             <div className="flex flex-col gap-2">
-              {[1, 2, 3].map(n => {
+              {[1, 2, 3, 4, 5, 6].map(n => {
                 const pct = user.matchHighPct?.[String(n)]
                 return (
                   <div key={n} className="flex items-center justify-between bg-cream-dark rounded-xl px-4 py-3">

@@ -282,6 +282,7 @@ export default function PetModal({ onClose }) {
                   petCompanion={petComp}
                   petWeapon={petWeapon}
                   width={120}
+                  interactive
                 />
                 <div style={{
                   position: 'absolute', top: 2, right: -12,

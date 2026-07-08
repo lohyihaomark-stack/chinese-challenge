@@ -33,16 +33,31 @@ function StrokeChar({ char }) {
   }, [char])
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1.5">
       <div
         ref={containerRef}
-        className="border border-cream-dark rounded-lg bg-white shadow-sm"
-        style={{ width: 84, height: 84 }}
+        className="rounded-lg shadow-md"
+        style={{
+          width: 84, height: 84,
+          background: '#fff',
+          border: '2px solid rgba(0,212,255,0.3)',
+          boxShadow: '0 0 10px rgba(0,212,255,0.15)',
+        }}
       />
-      <span className="text-xs text-brick/50">{char}</span>
+      <span
+        className="text-sm font-black"
+        style={{ color: '#e8f4ff', textShadow: '0 0 8px rgba(0,212,255,0.4)' }}
+      >
+        {char}
+      </span>
       <button
         onClick={() => writerRef.current?.animateCharacter()}
-        className="text-[10px] bg-brick text-cream px-2 py-0.5 rounded-full hover:bg-brick-mid transition-colors"
+        className="flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full transition-all active:scale-95"
+        style={{
+          background: 'rgba(0,212,255,0.15)',
+          border: '1px solid rgba(0,212,255,0.4)',
+          color: '#00d4ff',
+        }}
       >
         ▶ 播放
       </button>
@@ -56,13 +71,23 @@ export default function StrokeOrder({ word }) {
 
   return (
     <div>
-      <p className="text-[11px] font-semibold text-brick/50 mb-2 uppercase tracking-wide">笔画顺序</p>
-      <div className="flex gap-3 flex-wrap">
+      <p
+        className="text-xs font-bold uppercase tracking-wider mb-3"
+        style={{ color: 'rgba(0,212,255,0.6)' }}
+      >
+        ✏️ 笔画顺序
+      </p>
+      <div className="flex gap-4 flex-wrap">
         {chars.map((c, i) => (
           <StrokeChar key={i} char={c} />
         ))}
       </div>
-      <p className="text-[10px] text-brick/30 mt-2">点击「▶ 播放」查看每个字的笔画动画</p>
+      <p
+        className="text-xs mt-3"
+        style={{ color: 'rgba(0,212,255,0.45)' }}
+      >
+        点击「▶ 播放」查看笔画动画
+      </p>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { addCoins } from '../utils/userStore'
+import { addCoins, trackMissionProgress, getCurrentName } from '../utils/userStore'
+import { applyBossDamage } from '../utils/globalBoss'
 
 /* ── Detect if message is mostly English ─────────────── */
 function isEnglish(text) {
@@ -30,17 +31,32 @@ function getUnitHook(unit) {
   return templates[Math.floor(Math.random() * templates.length)]
 }
 
-/* ── System prompt ───────────────────────────────────── */
-function buildSystemPrompt(allUnits, studentName) {
-  const lines = allUnits.flatMap(unit =>
-    unit.vocabs.map(v =>
-      `${v.hanzi}（${v.pinyin}）：${v.definition}；搭配：${v.collocations.join('、')}；例：${v.example}`
-    )
-  )
+/* ── System prompt ─────────────────────────────────────
+   Only include the ACTIVE unit's full details. Other units
+   get just a word list so the bot knows what exists but the
+   token count stays small (~75% smaller than full prompt). */
+function buildSystemPrompt(allUnits, studentName, currentUnitIndex) {
+  const activeUnit = allUnits[currentUnitIndex] || allUnits[0]
+  const otherUnits = allUnits.filter((_, i) => i !== currentUnitIndex)
+  const totalWords = allUnits.reduce((n, u) => n + u.vocabs.length, 0)
+
+  const activeDetail = activeUnit.vocabs.map(v =>
+    `${v.hanzi}（${v.pinyin}）：${v.definition}；搭配：${v.collocations.join('、')}；例：${v.example}`
+  ).join('\n')
+
+  const otherList = otherUnits.map(u =>
+    `单元《${u.title}》：${u.vocabs.map(v => v.hanzi).join('、')}`
+  ).join('\n')
+
   return `你是"词语老师"，一位专门帮助新加坡中一学生学习华文词汇的AI助手。学生叫${studentName}。
 
-你熟悉学生正在学习的全部 ${lines.length} 个词汇（共三个单元）：
-${lines.join('\n')}
+学生正在使用的词语学习应用共有 6 个单元、${totalWords} 个词语。
+
+学生【当前正在学习】单元《${activeUnit.title}》，本单元的 ${activeUnit.vocabs.length} 个词语详细资料如下：
+${activeDetail}
+
+其他单元的词语清单（如学生问起，你也认识这些词，但建议他们切换到对应单元学习更详细的内容）：
+${otherList}
 
 你的能力：
 • 解释词语的意思、用法和语境细节
@@ -91,8 +107,8 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
   const bubbleTimers = useRef([])
 
   const systemPrompt = useMemo(
-    () => buildSystemPrompt(allUnits, studentName),
-    [allUnits, studentName]
+    () => buildSystemPrompt(allUnits, studentName, currentUnitIndex),
+    [allUnits, studentName, currentUnitIndex]
   )
 
   /* ── Scroll to latest message ── */
@@ -104,6 +120,13 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 150)
   }, [open])
+
+  /* ── Open from the user-bar launcher button ── */
+  useEffect(() => {
+    const h = () => { setOpen(true); setBubble(null) }
+    window.addEventListener('vocab_open_chat', h)
+    return () => window.removeEventListener('vocab_open_chat', h)
+  }, [])
 
   /* ── Proactive bubble on unit switch ── */
   useEffect(() => {
@@ -173,11 +196,13 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
     if (!duel) return false
     const correct = text.trim() === duel.word
     if (correct) {
-      addCoins(8)
+      addCoins(4)
+      trackMissionProgress('duel:correct')
+      applyBossDamage(getCurrentName(), 1)
       setMessages(prev => [
         ...prev,
         { role: 'user', content: text.trim() },
-        { role: 'assistant', content: `答对了！「${duel.word}」！你获得了 +8 🪙 继续加油！` },
+        { role: 'assistant', content: `答对了！「${duel.word}」！你获得了 +4 🪙 继续加油！` },
       ])
     } else {
       setMessages(prev => [
@@ -205,16 +230,16 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
     setInput('')
     setApiError(null)
 
-    // English detection → block, +5 coins as nudge, no API call
+    // English detection → block, +2 coins as nudge, no API call
     const english = isEnglish(trimmed)
     const msgIdx  = messages.length
     if (english) {
-      addCoins(5)
+      addCoins(2)
       setEnglishMsgs(prev => new Set([...prev, msgIdx]))
       setMessages(prev => [
         ...prev,
         { role: 'user', content: trimmed },
-        { role: 'assistant', content: '请用中文提问！用中文问我可以获得 +5 🪙 哦，加油！' },
+        { role: 'assistant', content: '请用中文提问！用中文问我可以获得 +2 🪙 哦，加油！' },
       ])
       return
     }
@@ -223,6 +248,7 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
     const history = [...messages, userMsg]
     setMessages([...history, { role: 'assistant', content: '', streaming: true }])
     setLoading(true)
+    trackMissionProgress('chat:msg')
 
     const apiHistory = history.map(m => ({ role: m.role, content: m.content }))
 
@@ -235,10 +261,24 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        if (data.error === 'NO_API_KEY') setApiError('no_key')
-        else throw new Error(data.error || 'Request failed')
-        setMessages(prev => prev.slice(0, -1))
-        return
+        if (data.error === 'NO_API_KEY') {
+          setApiError('no_key')
+          setMessages(prev => prev.slice(0, -1))
+          return
+        }
+        if (data.error === 'QUOTA_EXCEEDED') {
+          const wait = data.retryAfter || 30
+          setMessages(prev => {
+            const u = [...prev]
+            u[u.length - 1] = {
+              role: 'assistant',
+              content: `老师正在喘口气休息一下 😅\n请等 ${wait} 秒后再问我吧，太多同学同时在问问题啦！`,
+            }
+            return u
+          })
+          return
+        }
+        throw new Error(data.detail || data.error || 'Request failed')
       }
 
       const reader  = res.body.getReader()
@@ -277,9 +317,12 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
       })
     } catch (err) {
       console.error(err)
+      const friendly = /quota|rate/i.test(err.message || '')
+        ? '请求太多啦，请等一会儿再问我 😊'
+        : '老师暂时无法回答，请稍后再试一次。'
       setMessages(prev => {
         const u = [...prev]
-        u[u.length - 1] = { role: 'assistant', content: '抱歉，连接失败。请检查网络后重试。' }
+        u[u.length - 1] = { role: 'assistant', content: friendly }
         return u
       })
     } finally {
@@ -313,20 +356,6 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
             问问词语老师 →
           </button>
         </div>
-      )}
-
-      {/* ── Floating trigger button ───────────────────────── */}
-      {!open && (
-        <button
-          onClick={() => { setOpen(true); setBubble(null) }}
-          className="fixed bottom-6 right-4 z-40 bg-brick hover:bg-brick-mid text-cream rounded-2xl px-4 py-3 shadow-2xl flex items-center gap-2 transition-colors animate-fadeIn"
-        >
-          <span className="text-2xl leading-none">📚</span>
-          <div className="text-left">
-            <p className="font-black text-base leading-tight">词语老师</p>
-            <p className="text-cream/65 text-xs leading-tight">AI 词汇助手</p>
-          </div>
-        </button>
       )}
 
       {/* ── Chat panel ────────────────────────────────────── */}
@@ -396,7 +425,7 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
                   </div>
                   {/* English correction badge */}
                   {msg.role === 'user' && englishMsgs.has(i) && (
-                    <p className="text-xs text-gold font-semibold mt-1 pr-1">+5 🪙 下次试试用中文哦！</p>
+                    <p className="text-xs text-gold font-semibold mt-1 pr-1">+2 🪙 下次试试用中文哦！</p>
                   )}
                 </div>
               </div>
@@ -420,7 +449,7 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
           {/* API key error */}
           {apiError === 'no_key' && (
             <div className="mx-4 mb-2 bg-brick/8 border border-brick/25 rounded-xl px-4 py-3 text-brick/80 text-sm shrink-0">
-              ⚠️ 请在 Vercel 控制台设置 <code className="bg-brick/10 px-1 rounded">GEMINI_API_KEY</code> 环境变量后重新部署。
+              ⚠️ 请在 Vercel 控制台设置 <code className="bg-brick/10 px-1 rounded">ANTHROPIC_API_KEY</code> 环境变量后重新部署。
             </div>
           )}
 

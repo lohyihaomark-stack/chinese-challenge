@@ -9,7 +9,7 @@ import UnitPage from './components/UnitPage'
 import LoginScreen from './components/LoginScreen'
 import ProfileModal from './components/ProfileModal'
 import PetModal from './components/PetModal'
-import PetCreature from './components/PetCreature'
+import PetCreature, { getStage, getPetStageInfo, PET_STAGES } from './components/PetCreature'
 import AchievementToast from './components/AchievementToast'
 import ChatBot from './components/ChatBot'
 import CoinPopup from './components/CoinPopup'
@@ -19,7 +19,8 @@ import TodayLoginsModal from './components/TodayLoginsModal'
 import GlobalBossModal from './components/GlobalBossModal'
 import BossDamageToast from './components/BossDamageToast'
 import FloatingParticles from './components/FloatingParticles'
-import { loginUser, getSession, logoutUser, getDailyMissions, isWordOfDayClaimed, getLevelInfo, syncProgress, restoreXP } from './utils/userStore'
+import ReviewModal from './components/ReviewModal'
+import { loginUser, getSession, logoutUser, getDailyMissions, isWordOfDayClaimed, getLevelInfo, syncProgress, restoreXP, getDueReviews } from './utils/userStore'
 import { getCurrentBoss } from './utils/globalBoss'
 import TeacherDashboard from './components/TeacherDashboard'
 
@@ -66,6 +67,54 @@ function LevelUpOverlay({ info, onDone }) {
   )
 }
 
+/* ══════════════════════════════════════════════════════════
+   PET EVOLUTION FULL SCREEN OVERLAY — the Pokémon moment
+   ══════════════════════════════════════════════════════════ */
+function EvolutionOverlay({ level, user, onDone }) {
+  const info = getPetStageInfo(level)
+  useEffect(() => { const t = setTimeout(onDone, 4200); return () => clearTimeout(t) }, [onDone])
+  return (
+    <div className="fixed inset-0 z-[310] flex items-center justify-center pointer-events-none">
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.85)' }} />
+      {/* Radial rays in the new stage's colour */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {Array.from({ length: 16 }).map((_, i) => (
+          <div key={i} className="absolute animate-burstRay"
+               style={{
+                 width: 3, height: '46%',
+                 background: `linear-gradient(to top, ${info.color}cc, transparent)`,
+                 transformOrigin: 'bottom center',
+                 transform: `rotate(${i * 22.5}deg) translateY(-100%)`,
+                 animationDelay: `${i * 0.03}s`,
+                 bottom: '50%', left: 'calc(50% - 1.5px)',
+               }} />
+        ))}
+      </div>
+      <div className="absolute rounded-full animate-levelBurst"
+           style={{ width: 340, height: 340, border: `3px solid ${info.color}`, boxShadow: `0 0 60px ${info.color}88, inset 0 0 60px ${info.color}22` }} />
+      <div className="relative z-10 text-center animate-levelBurst">
+        <PetCreature
+          level={level}
+          petHat={user?.petHat || 'hat_none'}
+          petAura={user?.petAura || 'aura_none'}
+          petCompanion={user?.petCompanion || 'companion_none'}
+          petWeapon={user?.petWeapon || 'weapon_none'}
+          width={170}
+        />
+        <div className="tracking-widest mt-2"
+             style={{ fontFamily: '"Orbitron", sans-serif', fontSize: '2.6rem', fontWeight: 900, color: info.color, textShadow: `0 0 40px ${info.color}, 0 0 80px ${info.color}88` }}>
+          进化成功！
+        </div>
+        <div className="font-black text-3xl mt-1" style={{ color: '#fff', textShadow: `0 0 20px ${info.color}` }}>
+          {info.name}
+        </div>
+        <div className="text-base mt-1" style={{ color: 'rgba(255,255,255,0.75)' }}>{info.desc}</div>
+        <div className="text-sm mt-2 font-mono" style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em' }}>◈ Lv.{level} · 灵宠进化 ◈</div>
+      </div>
+    </div>
+  )
+}
+
 const UNITS = [unit1, unit2, unit3, unit4, unit5, unit6]
 const UNIT_LABELS = ['一', '二', '三', '四', '五', '六']
 const UNIT_ICONS  = ['🌱', '🌸', '🌟', '🔥', '💡', '🏆']
@@ -94,6 +143,8 @@ export default function App() {
   const [missionDone,  setMissionDone]  = useState(null)
   const [todayLogins,  setTodayLogins]  = useState({ available: false, count: 0 })
   const [showBoss,     setShowBoss]     = useState(false)
+  const [showReview,   setShowReview]   = useState(false)
+  const [dueCount,     setDueCount]     = useState(0)
   const [bossState,    setBossState]    = useState({ available: false, hp: 0, maxHp: 5000, defeated: false })
   const [bossShake,    setBossShake]    = useState(false)
   const [bossToast,    setBossToast]    = useState(null)
@@ -109,6 +160,7 @@ export default function App() {
   /* ── New visual state ─────────────────────────────────── */
   const [xpData,      setXpData]      = useState(() => { const s = getSession(); return s ? getLevelInfo(s.globalXP || 0) : null })
   const [levelUpInfo, setLevelUpInfo] = useState(null)
+  const [evolutionLv, setEvolutionLv] = useState(null)
   const [leaderboard, setLeaderboard] = useState([])
 
   /* ── Restore XP from Redis if localStorage was wiped ──── */
@@ -186,6 +238,12 @@ export default function App() {
     setReady(true)
   }, [])
 
+  /* ── Refresh the review-due badge on login and after answering ── */
+  useEffect(() => {
+    if (!user) { setDueCount(0); return }
+    setDueCount(getDueReviews(UNITS).length)
+  }, [user, showReview])
+
   /* ── Sync progress on page hide ─────────────────────── */
   useEffect(() => {
     const handleHide = () => { if (getSession()) syncProgress() }
@@ -242,7 +300,12 @@ export default function App() {
       setXpData(getLevelInfo(e.detail.total))
       pushXP(getSession()?.name, e.detail.total)
     }
-    const hLvl = (e) => setLevelUpInfo(e.detail)
+    const hLvl = (e) => {
+      const lv = e.detail?.level
+      // Crossing an evolution threshold gets the big pet moment instead
+      if (lv && getStage(lv) > getStage(lv - 1)) setEvolutionLv(lv)
+      else setLevelUpInfo(e.detail)
+    }
     window.addEventListener('vocab_xp',      hXp)
     window.addEventListener('vocab_levelup', hLvl)
     return () => {
@@ -318,7 +381,7 @@ export default function App() {
   }
   const handleLogout = () => {
     logoutUser(); setUser(null)
-    setShowProfile(false); setShowPet(false); setShowMissions(false); setShowWotD(false); setShowLogins(false); setShowBoss(false)
+    setShowProfile(false); setShowPet(false); setShowMissions(false); setShowWotD(false); setShowLogins(false); setShowBoss(false); setShowReview(false)
     setMissions(null); setWotdClaimed(false)
     setTodayLogins({ available: false, count: 0 })
     setBossState({ available: false, hp: 0, maxHp: 5000, defeated: false })
@@ -347,13 +410,16 @@ export default function App() {
   const ac = UNIT_COLORS[activeUnit]
 
   return (
-    <div className="cyber-bg min-h-screen flex flex-col relative">
+    <div className="cyber-bg h-[100dvh] overflow-hidden flex flex-col relative">
 
       {/* ── Floating background particles ───────────────── */}
       <FloatingParticles />
 
       {/* ── Level-up overlay ─────────────────────────────── */}
       {levelUpInfo && <LevelUpOverlay info={levelUpInfo} onDone={() => setLevelUpInfo(null)} />}
+
+      {/* ── Pet evolution overlay ────────────────────────── */}
+      {evolutionLv && <EvolutionOverlay level={evolutionLv} user={user} onDone={() => setEvolutionLv(null)} />}
 
       {/* ── Header ──────────────────────────────────────── */}
       <header className="cyber-header relative" style={{ paddingTop: 0, paddingBottom: 0, zIndex: 30 }}>
@@ -496,7 +562,7 @@ export default function App() {
         {/* Character button → pet modal */}
         <button
           onClick={() => openModal(setShowPet)}
-          className="flex items-center gap-1 neon-btn-purple rounded-full px-3 py-1 text-sm shrink-0"
+          className="hud-pill flex items-center gap-1 neon-btn-purple rounded-full px-3 py-1 text-sm shrink-0"
         >
           <span className="text-base">🧑</span>
           <span className="font-black text-sm">我的宠物</span>
@@ -511,7 +577,7 @@ export default function App() {
           return (
             <button
               onClick={() => openModal(setShowMissions)}
-              className={`relative flex items-center gap-1 rounded-full px-3 py-1 border transition-all shrink-0 text-sm font-black ${
+              className={`hud-pill relative flex items-center gap-1 rounded-full px-3 py-1 border shrink-0 text-sm font-black ${
                 allClaimed && wotdClaimed
                   ? 'bg-neon-green/10 border-neon-green/40 text-neon-green'
                   : hasUnclaimed
@@ -528,13 +594,45 @@ export default function App() {
           )
         })()}
 
+        {/* 今日复习 — spaced-repetition deck */}
+        <button
+          onClick={() => openModal(setShowReview)}
+          className={`hud-pill relative flex items-center gap-1 rounded-full px-3 py-1 shrink-0 text-sm font-black ${dueCount > 0 ? 'animate-pulse2' : ''}`}
+          style={{
+            background: dueCount > 0 ? 'rgba(6,214,160,0.12)' : 'rgba(6,214,160,0.05)',
+            border: `1px solid ${dueCount > 0 ? 'rgba(6,214,160,0.5)' : 'rgba(6,214,160,0.2)'}`,
+            color: dueCount > 0 ? '#06d6a0' : 'rgba(6,214,160,0.45)',
+          }}
+          title="今日复习"
+        >
+          <span className="text-base">📖</span>
+          <span>复习</span>
+          {dueCount > 0 && (
+            <span className="tabular-nums rounded-full px-1.5"
+                  style={{ background: 'rgba(6,214,160,0.2)', fontSize: '0.72rem' }}>
+              {dueCount}
+            </span>
+          )}
+        </button>
+
+        {/* AI 词语老师 chatbot launcher — beside 今日任务 */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('vocab_open_chat'))}
+          className="hud-pill flex items-center gap-1 rounded-full px-3 py-1 shrink-0 text-sm font-black"
+          style={{ background: 'rgba(255,107,53,0.12)', border: '1px solid rgba(255,107,53,0.45)', color: '#ff6b35' }}
+          title="AI 词语老师"
+        >
+          <span className="text-base">📚</span>
+          <span>词语老师</span>
+        </button>
+
         {/* Global boss */}
         {bossState.available && (() => {
           const boss = getCurrentBoss()
           return (
             <button
               onClick={() => openModal(setShowBoss)}
-              className={`relative flex items-center gap-1 rounded-full px-3 py-1 border shrink-0 transition-all text-sm font-black ${
+              className={`hud-pill relative flex items-center gap-1 rounded-full px-3 py-1 border shrink-0 text-sm font-black ${
                 bossState.defeated
                   ? 'bg-neon-green/10 border-neon-green/40 text-neon-green'
                   : 'bg-neon-pink/10 border-neon-pink/35 text-neon-pink hover:bg-neon-pink/20'
@@ -557,7 +655,7 @@ export default function App() {
         {todayLogins.available && (
           <button
             onClick={() => openModal(setShowLogins)}
-            className="flex items-center gap-1 bg-neon-cyan/8 hover:bg-neon-cyan/15 border border-neon-cyan/30 rounded-full px-3 py-1 transition-all shrink-0 text-sm font-black text-neon-cyan"
+            className="hud-pill flex items-center gap-1 bg-neon-cyan/8 hover:bg-neon-cyan/15 border border-neon-cyan/30 rounded-full px-3 py-1 shrink-0 text-sm font-black text-neon-cyan"
             title="今日登录人数"
           >
             <span className="text-base">🏫</span>
@@ -642,10 +740,152 @@ export default function App() {
         </div>
       </nav>
 
-      {/* ── Unit Content ─────────────────────────────────── */}
-      <main className="flex-1 flex flex-col max-w-3xl mx-auto w-full overflow-hidden relative z-10">
-        <UnitPage key={activeUnit} unit={UNITS[activeUnit]} user={user} />
-      </main>
+      {/* ── Content row: pet card · main · leaderboard card ──
+           Flex columns reserve their own space, so they can never overlap the
+           centred content — on a narrow screen the main column shrinks. ── */}
+      <div className="flex-1 flex justify-center overflow-hidden relative z-10 min-h-0">
+
+        {/* Pet card (left) — clickable, themed to the pet's evolution stage */}
+        <aside className="hidden lg:flex shrink-0 items-center justify-center" style={{ width: 222 }}>
+          {(() => {
+            const petLv      = xpData?.current?.level || 1
+            const stage      = getStage(petLv)
+            const stageInfo  = getPetStageInfo(petLv)
+            const nextStage  = PET_STAGES[stage]           // undefined at max stage
+            const stageStart = stage === 1 ? 0 : (stage - 1) * 5
+            const evoPct     = stageInfo.nextLv
+              ? Math.min(100, Math.round(((petLv - stageStart) / (stageInfo.nextLv - stageStart)) * 100))
+              : 100
+            return (
+              <button
+                onClick={() => openModal(setShowPet)}
+                className="glass-card p-4 flex flex-col items-center gap-2.5 text-left transition-all"
+                style={{ width: 164, cursor: 'pointer', borderColor: `${stageInfo.color}55` }}
+                title="打开灵宠养成"
+              >
+                {/* Stage-coloured glow bed behind the pet */}
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute', inset: -12,
+                    background: `radial-gradient(circle, ${stageInfo.color}33 0%, transparent 70%)`,
+                    filter: 'blur(10px)', pointerEvents: 'none',
+                  }} />
+                  <PetCreature
+                    level={petLv}
+                    petHat={user.petHat || 'hat_none'}
+                    petAura={user.petAura || 'aura_none'}
+                    petCompanion={user.petCompanion || 'companion_none'}
+                    petWeapon={user.petWeapon || 'weapon_none'}
+                    width={150}
+                    interactive
+                  />
+                </div>
+
+                <p style={{ color: stageInfo.color, textShadow: `0 0 10px ${stageInfo.color}88`, fontWeight: 900, fontSize: '17px', textAlign: 'center', width: '100%' }}>
+                  {user.petName || user.avatarName || user.name}
+                </p>
+
+                {xpData && (
+                  <div className="flex flex-col items-center gap-1 w-full">
+                    <div className="flex items-center gap-1.5">
+                      <span style={{ fontSize: '1.3rem' }}>{xpData.current.emoji}</span>
+                      <span style={{ color: xpData.current.color, fontWeight: 900, fontSize: '15px' }}>
+                        Lv.{xpData.current.level} · {stageInfo.name}
+                      </span>
+                    </div>
+                    <div className="w-full rounded-full overflow-hidden" style={{ height: 6, background: 'rgba(255,255,255,0.08)' }}>
+                      <div className="h-full rounded-full transition-all duration-500"
+                           style={{ width: `${xpData.pct}%`, background: xpData.current.color, boxShadow: `0 0 6px ${xpData.current.color}` }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Evolution progress — the anticipation hook */}
+                {stageInfo.nextLv ? (
+                  <div className="w-full flex flex-col gap-1">
+                    <div className="flex justify-between items-baseline">
+                      <span style={{ fontSize: '11px', color: 'rgba(168,216,240,0.55)', fontFamily: 'monospace' }}>
+                        {stage <= 2 ? '🐣 孵化进度' : '⚡ 进化进度'}
+                      </span>
+                      <span style={{ fontSize: '11px', fontWeight: 900, color: (nextStage?.color || stageInfo.color) }}>
+                        Lv.{stageInfo.nextLv} → {nextStage?.name}
+                      </span>
+                    </div>
+                    <div className="w-full rounded-full overflow-hidden" style={{ height: 5, background: 'rgba(255,255,255,0.07)' }}>
+                      <div className="h-full rounded-full transition-all duration-700"
+                           style={{
+                             width: `${evoPct}%`,
+                             background: `linear-gradient(90deg, ${stageInfo.color}, ${nextStage?.color || stageInfo.color})`,
+                             boxShadow: `0 0 8px ${(nextStage?.color || stageInfo.color)}aa`,
+                           }} />
+                    </div>
+                    {stage <= 2 && (
+                      <p style={{ fontSize: '11px', color: stageInfo.color, fontWeight: 700, textAlign: 'center', marginTop: 1 }}>
+                        还差 {stageInfo.nextLv - petLv} 级孵化！点我摸摸 ✨
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '12px', color: '#ffd60a', fontWeight: 900, textShadow: '0 0 8px rgba(255,214,10,0.5)' }}>
+                    ✨ 终极形态 ✨
+                  </p>
+                )}
+              </button>
+            )
+          })()}
+        </aside>
+
+        {/* Main */}
+        <main className="flex flex-col w-full max-w-3xl min-w-0 min-h-0 overflow-hidden">
+          <UnitPage key={activeUnit} unit={UNITS[activeUnit]} user={user} />
+        </main>
+
+        {/* Leaderboard card (right) */}
+        <aside className="hidden lg:flex shrink-0 items-center justify-center pointer-events-none" style={{ width: 222 }}>
+          {leaderboard.length > 0 && (
+            <div className="glass-card p-4" style={{ width: 210 }}>
+              <p style={{ color: '#fdee30', fontWeight: 900, fontSize: '20px', textAlign: 'center', marginBottom: 14, letterSpacing: '0.06em', textShadow: '0 0 12px rgba(255,214,10,0.7)' }}>
+                🏆 排行榜
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {leaderboard.slice(0, 5).map((entry, i) => {
+                  const isMe = entry.name === user?.name
+                  const rankColor = i === 0 ? '#fdee30' : i === 1 ? '#C0C0C0' : i === 2 ? '#cd7f32' : 'rgba(0,240,255,0.35)'
+                  return (
+                    <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ color: rankColor, fontWeight: 900, fontSize: '18px', width: 24, textAlign: 'center', flexShrink: 0 }}>
+                        {i + 1}
+                      </span>
+                      <span style={{ fontSize: '1.4rem', flexShrink: 0 }} title={entry.title}>{entry.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{
+                          color:      isMe ? '#00f0ff' : 'rgba(220,240,255,0.9)',
+                          textShadow: isMe ? '0 0 10px rgba(0,240,255,0.9)' : 'none',
+                          fontWeight: isMe ? 900 : 700,
+                          fontSize:   '17px',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          lineHeight: 1.2,
+                        }}>
+                          {isMe ? '▶ ' : ''}{entry.name}
+                        </p>
+                        <p style={{ color: entry.color || 'rgba(0,240,255,0.5)', fontSize: '14px', fontFamily: 'monospace', lineHeight: 1.3, marginTop: 2 }}>
+                          {entry.title} · Lv.{entry.level}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ marginTop: 14, paddingTop: 10, borderTop: '1px solid rgba(255,214,10,0.15)' }}>
+                <p style={{ color: 'rgba(255,214,10,0.45)', fontSize: '13px', textAlign: 'center', fontFamily: 'monospace' }}>
+                  全班 Top 5
+                </p>
+              </div>
+            </div>
+          )}
+        </aside>
+
+      </div>
 
       {/* ── Modals ───────────────────────────────────────── */}
       {showProfile  && <ProfileModal user={user} onClose={() => setShowProfile(false)} />}
@@ -654,6 +894,7 @@ export default function App() {
       {showWotD     && <WordOfDayModal units={UNITS} onClose={() => setShowWotD(false)} />}
       {showLogins   && <TodayLoginsModal currentName={user.name} onClose={() => setShowLogins(false)} />}
       {showBoss     && <GlobalBossModal currentName={user.name} onClose={() => setShowBoss(false)} />}
+      {showReview   && <ReviewModal units={UNITS} onClose={() => setShowReview(false)} />}
 
       {/* ── Achievement toast ──────────────────────────── */}
       {toast && <AchievementToast achievement={toast} onDone={() => setToast(null)} />}
@@ -696,96 +937,6 @@ export default function App() {
               </p>
             </div>
           </button>
-        </div>
-      )}
-
-      {/* ── Pet sidebar (left) ──────────────────────────── */}
-      <div className="fixed left-20 top-1/2 -translate-y-1/2 z-20 hidden xl:flex flex-col items-center gap-2 pointer-events-none"
-           style={{ width: 190 }}>
-        <div className="glass-card p-4 flex flex-col items-center gap-3 w-full">
-          {/* Pet creature */}
-          <div className="flex justify-center">
-            <PetCreature
-              level={xpData?.current?.level || 1}
-              petHat={user.petHat || 'hat_none'}
-              petAura={user.petAura || 'aura_none'}
-              petCompanion={user.petCompanion || 'companion_none'}
-              petWeapon={user.petWeapon || 'weapon_none'}
-              width={165}
-            />
-          </div>
-          {/* Pet name */}
-          <p style={{ color: '#00f0ff', textShadow: '0 0 8px rgba(0,240,255,0.6)', fontWeight: 900, fontSize: '17px', textAlign: 'center', width: '100%' }}>
-            {user.petName || user.avatarName || user.name}
-          </p>
-          {/* Level badge */}
-          {xpData && (
-            <div className="flex flex-col items-center gap-1 w-full">
-              <div className="flex items-center gap-1.5">
-                <span style={{ fontSize: '1.4rem' }}>{xpData.current.emoji}</span>
-                <span style={{ color: xpData.current.color, fontWeight: 900, fontSize: '16px' }}>
-                  Lv.{xpData.current.level}
-                </span>
-              </div>
-              <p style={{ color: xpData.current.color, opacity: 0.9, fontSize: '15px', fontWeight: 700, textAlign: 'center' }}>
-                {xpData.current.title}
-              </p>
-              {/* Mini XP bar */}
-              <div className="w-full rounded-full overflow-hidden mt-0.5" style={{ height: 7, background: 'rgba(255,255,255,0.08)' }}>
-                <div className="h-full rounded-full transition-all duration-500"
-                     style={{ width: `${xpData.pct}%`, background: xpData.current.color, boxShadow: `0 0 6px ${xpData.current.color}` }} />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── XP leaderboard sidebar ──────────────────────── */}
-      {leaderboard.length > 0 && (
-        <div className="fixed right-4 top-1/2 -translate-y-1/2 z-20 hidden xl:flex flex-col pointer-events-none"
-             style={{ width: 270 }}>
-          <div className="glass-card p-5">
-            <p style={{ color: '#fdee30', fontWeight: 900, fontSize: '20px', textAlign: 'center', marginBottom: 14, letterSpacing: '0.06em', textShadow: '0 0 12px rgba(255,214,10,0.7)' }}>
-              🏆 排行榜
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {leaderboard.slice(0, 5).map((entry, i) => {
-                const isMe = entry.name === user?.name
-                const rankColor = i === 0 ? '#fdee30' : i === 1 ? '#C0C0C0' : i === 2 ? '#cd7f32' : 'rgba(0,240,255,0.35)'
-                return (
-                  <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {/* Rank */}
-                    <span style={{ color: rankColor, fontWeight: 900, fontSize: '18px', width: 24, textAlign: 'center', flexShrink: 0 }}>
-                      {i + 1}
-                    </span>
-                    {/* Level emoji */}
-                    <span style={{ fontSize: '1.4rem', flexShrink: 0 }} title={entry.title}>{entry.emoji}</span>
-                    {/* Name + title */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{
-                        color:      isMe ? '#00f0ff' : 'rgba(220,240,255,0.9)',
-                        textShadow: isMe ? '0 0 10px rgba(0,240,255,0.9)' : 'none',
-                        fontWeight: isMe ? 900 : 700,
-                        fontSize:   '17px',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        lineHeight: 1.2,
-                      }}>
-                        {isMe ? '▶ ' : ''}{entry.name}
-                      </p>
-                      <p style={{ color: entry.color || 'rgba(0,240,255,0.5)', fontSize: '14px', fontFamily: 'monospace', lineHeight: 1.3, marginTop: 2 }}>
-                        {entry.title} · Lv.{entry.level}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            <div style={{ marginTop: 14, paddingTop: 10, borderTop: '1px solid rgba(255,214,10,0.15)' }}>
-              <p style={{ color: 'rgba(255,214,10,0.45)', fontSize: '13px', textAlign: 'center', fontFamily: 'monospace' }}>
-                全班 Top 5
-              </p>
-            </div>
-          </div>
         </div>
       )}
 
