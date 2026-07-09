@@ -143,11 +143,10 @@ export default function LoginScreen({ onLogin }) {
   const [bootLines, setBootLines] = useState([])
 
   useEffect(() => {
-    BOOT_LINES.forEach((line) => {
-      setTimeout(() => {
-        setBootLines(prev => [...prev, line])
-      }, line.delay + 180)
-    })
+    const timers = BOOT_LINES.map((line, i) =>
+      setTimeout(() => setBootLines(BOOT_LINES.slice(0, i + 1)), line.delay + 180)
+    )
+    return () => timers.forEach(clearTimeout)
   }, [])
 
   const submit = () => {
@@ -211,6 +210,15 @@ export default function LoginScreen({ onLogin }) {
         }
         @media (max-width: 680px) {
           .student-side { display: none !important; }
+        }
+        /* Short screens (e.g. 1366x768 laptops): hide decorative console and
+           tighten spacing so the login form fits without scrolling */
+        @media (max-height: 800px) {
+          .boot-console { display: none !important; }
+          .login-stack { gap: 8px !important; padding-bottom: 16px !important; }
+          .login-title-panel { padding: 12px 20px 10px !important; }
+          .login-title-panel h1 { font-size: clamp(1.7rem, 8.5vw, 2.2rem) !important; }
+          .login-panel { padding: 14px 20px 14px !important; }
         }
       `}</style>
 
@@ -298,10 +306,10 @@ export default function LoginScreen({ onLogin }) {
       </div>
 
       {/* ── Center content ── */}
-      <div className="w-full max-w-sm flex flex-col gap-3 relative" style={{ zIndex: 10, paddingBottom: 28 }}>
+      <div className="login-stack w-full max-w-sm flex flex-col gap-3 relative" style={{ zIndex: 10, paddingBottom: 28 }}>
 
         {/* ── Title panel ── */}
-        <div className="relative overflow-hidden" style={{
+        <div className="login-title-panel relative overflow-hidden" style={{
           background: 'rgba(3,7,18,0.97)',
           border: '1px solid rgba(0,240,255,0.35)',
           clipPath: 'polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px))',
@@ -332,7 +340,7 @@ export default function LoginScreen({ onLogin }) {
           <h1
             className="glow-title glitch-title font-black text-center"
             data-text="中一词语宝典"
-            style={{ fontSize: '2.6rem', letterSpacing: '0.14em' }}
+            style={{ fontSize: 'clamp(1.7rem, 8.5vw, 2.6rem)', letterSpacing: '0.14em' }}
           >
             中一词语宝典
           </h1>
@@ -347,7 +355,7 @@ export default function LoginScreen({ onLogin }) {
         </div>
 
         {/* ── Boot console ── */}
-        <div className="relative overflow-hidden" style={{
+        <div className="boot-console relative overflow-hidden" style={{
           background: 'rgba(0,8,3,0.95)',
           border: '1px solid rgba(6,214,160,0.25)',
           clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)',
@@ -400,7 +408,7 @@ export default function LoginScreen({ onLogin }) {
         </div>
 
         {/* ── Login panel ── */}
-        <div className="relative overflow-hidden" style={{
+        <div className="login-panel relative overflow-hidden" style={{
           background: 'rgba(3,7,18,0.96)',
           border: '1px solid rgba(0,240,255,0.3)',
           clipPath: 'polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px))',
