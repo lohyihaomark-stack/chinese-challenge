@@ -44,7 +44,7 @@ export default function WordOfDayModal({ units, onClose }) {
 
           <button
             onClick={onClose}
-            className="absolute top-2 right-3 text-cream/70 hover:text-cream text-3xl leading-none w-8 h-8 flex items-center justify-center"
+            className="absolute top-2 right-3 z-20 text-cream/70 hover:text-cream text-3xl leading-none w-8 h-8 flex items-center justify-center"
           >×</button>
 
           <p className="text-cream/85 text-sm tracking-widest mb-0.5 relative z-10">✨ 今日词语 ✨</p>
