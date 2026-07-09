@@ -1161,3 +1161,5 @@ body::before {
 }
 
 @media (max-height:850px){.cyber-header > .flex.justify-between.pointer-events-none{display:none!important}.cyber-header .glow-subtitle{display:none!important}.cyber-header .glow-title{font-size:1.6rem!important}}.glass-card .items-baseline > span{white-space:nowrap}
+
+@media (max-height:860px){nav .min-w-\[110px\]{padding-top:3px!important;padding-bottom:3px!important}nav .text-sm.truncate{display:none!important}.min-w-\[68px\]{padding-top:8px!important;padding-bottom:8px!important}.glass-panel.holo-card{padding-top:4px!important;padding-bottom:4px!important}.overflow-y-auto.gap-4{padding:8px!important;gap:8px!important}.overflow-y-auto.gap-4>button,.overflow-y-auto.gap-4>div{padding:10px!important}.overflow-y-auto.gap-5{padding-top:8px!important;padding-bottom:8px!important;gap:10px!important}.overflow-y-auto.gap-5>.glass-card{padding:10px!important}}[style*='max-height: 45%']{max-height:236px!important}
