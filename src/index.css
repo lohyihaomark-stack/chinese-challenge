@@ -1159,3 +1159,5 @@ body::before {
   padding: 0;
   text-align: left;
 }
+
+@media (max-height:850px){.cyber-header > .flex.justify-between.pointer-events-none{display:none!important}.cyber-header .glow-subtitle{display:none!important}.cyber-header .glow-title{font-size:1.6rem!important}}.glass-card .items-baseline > span{white-space:nowrap}
