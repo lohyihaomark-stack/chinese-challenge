@@ -13,15 +13,11 @@ import PetCreature, { getStage, getPetStageInfo, PET_STAGES } from './components
 import AchievementToast from './components/AchievementToast'
 import ChatBot from './components/ChatBot'
 import CoinPopup from './components/CoinPopup'
-import MissionsModal from './components/MissionsModal'
 import WordOfDayModal from './components/WordOfDayModal'
 import TodayLoginsModal from './components/TodayLoginsModal'
-import GlobalBossModal from './components/GlobalBossModal'
-import BossDamageToast from './components/BossDamageToast'
 import FloatingParticles from './components/FloatingParticles'
 import ReviewModal from './components/ReviewModal'
-import { loginUser, getSession, logoutUser, getDailyMissions, isWordOfDayClaimed, getLevelInfo, syncProgress, restoreXP, getDueReviews } from './utils/userStore'
-import { getCurrentBoss } from './utils/globalBoss'
+import { loginUser, getSession, logoutUser, isWordOfDayClaimed, getLevelInfo, syncProgress, restoreXP, getDueReviews } from './utils/userStore'
 import TeacherDashboard from './components/TeacherDashboard'
 
 
@@ -133,28 +129,19 @@ export default function App() {
   const [ready,       setReady]       = useState(false)
   const [showProfile,  setShowProfile]  = useState(false)
   const [showPet,      setShowPet]      = useState(false)
-  const [showMissions, setShowMissions] = useState(false)
   const [showWotD,     setShowWotD]     = useState(false)
   const [showLogins,   setShowLogins]   = useState(false)
-  const [wotdClaimed,  setWotdClaimed]  = useState(false)
-  const [missions,     setMissions]     = useState(null)
   const [toast,        setToast]        = useState(null)
   const [coinPopup,    setCoinPopup]    = useState(null)
-  const [missionDone,  setMissionDone]  = useState(null)
   const [todayLogins,  setTodayLogins]  = useState({ available: false, count: 0 })
-  const [showBoss,     setShowBoss]     = useState(false)
   const [showReview,   setShowReview]   = useState(false)
   const [dueCount,     setDueCount]     = useState(0)
-  const [bossState,    setBossState]    = useState({ available: false, hp: 0, maxHp: 5000, defeated: false })
-  const [bossShake,    setBossShake]    = useState(false)
-  const [bossToast,    setBossToast]    = useState(null)
   /* ── Teacher dashboard state ─────────────────────── */
   const [showTeacher, setShowTeacher] = useState(false)
   const titleClickCount = useRef(0)
   const titleClickTimer = useRef(null)
 
   const popupCounter = useRef(0)
-  const bossToastCounter = useRef(0)
   const xpPushTimer = useRef(null)
 
   /* ── New visual state ─────────────────────────────────── */
@@ -202,28 +189,14 @@ export default function App() {
       .catch(() => {})
   }
 
-  const fetchBossState = () => {
-    fetch('/api/boss-stats')
-      .then(r => r.json())
-      .then(d => {
-        if (d?.available) {
-          setBossState({ available: true, hp: d.hp, maxHp: d.maxHp, defeated: d.defeated })
-        }
-      })
-      .catch(() => {})
-  }
-
   /* ── Restore session ── */
   useEffect(() => {
     const session = getSession()
     if (session) {
       const u = loginUser(session.name)
       setUser(u)
-      setMissions(getDailyMissions())
       const claimed = isWordOfDayClaimed()
-      setWotdClaimed(claimed)
       trackLogin(session.name)
-      fetchBossState()
       // Push current XP so leaderboard stays accurate on page refresh,
       // then restore from Redis if this browser's localStorage was reset.
       fetch('/api/update-xp', {
@@ -252,45 +225,6 @@ export default function App() {
     return () => {
       document.removeEventListener('visibilitychange', handleHide)
       window.removeEventListener('beforeunload', handleHide)
-    }
-  }, [])
-
-  /* ── Listen for boss-hit events → live HP + shake + toast ── */
-  useEffect(() => {
-    const h = (e) => {
-      const d = e.detail
-      if (!d?.available) return
-      setBossState({ available: true, hp: d.hp, maxHp: d.maxHp, defeated: d.defeated })
-      setBossShake(true)
-      setTimeout(() => setBossShake(false), 600)
-      bossToastCounter.current += 1
-      setBossToast({ id: bossToastCounter.current, damage: d.hitDealt || 0, defeated: d.defeated })
-    }
-    window.addEventListener('vocab_boss_hit', h)
-    return () => window.removeEventListener('vocab_boss_hit', h)
-  }, [])
-
-  /* ── Listen for word-of-day claim ── */
-  useEffect(() => {
-    const h = () => setWotdClaimed(true)
-    window.addEventListener('vocab_wotd_claimed', h)
-    return () => window.removeEventListener('vocab_wotd_claimed', h)
-  }, [])
-
-  /* ── Refresh missions on change + show completion toast ── */
-  useEffect(() => {
-    const onChange   = () => setMissions(getDailyMissions())
-    const onComplete = (e) => {
-      setMissionDone(e.detail)
-      setTimeout(() => setMissionDone(null), 3500)
-    }
-    window.addEventListener('vocab_missions_changed', onChange)
-    window.addEventListener('vocab_mission_complete', onChange)
-    window.addEventListener('vocab_mission_complete', onComplete)
-    return () => {
-      window.removeEventListener('vocab_missions_changed', onChange)
-      window.removeEventListener('vocab_mission_complete', onChange)
-      window.removeEventListener('vocab_mission_complete', onComplete)
     }
   }, [])
 
@@ -363,11 +297,8 @@ export default function App() {
     const u = loginUser(name)
     setUser(u)
     setXpData(getLevelInfo(u.globalXP || 0))
-    setMissions(getDailyMissions())
     const claimed = isWordOfDayClaimed()
-    setWotdClaimed(claimed)
     trackLogin(name)
-    fetchBossState()
     // Push XP immediately on login so leaderboard is current,
     // then restore from Redis if this browser's localStorage was reset.
     fetch('/api/update-xp', {
@@ -381,10 +312,8 @@ export default function App() {
   }
   const handleLogout = () => {
     logoutUser(); setUser(null)
-    setShowProfile(false); setShowPet(false); setShowMissions(false); setShowWotD(false); setShowLogins(false); setShowBoss(false); setShowReview(false)
-    setMissions(null); setWotdClaimed(false)
+    setShowProfile(false); setShowPet(false); setShowWotD(false); setShowLogins(false); setShowReview(false)
     setTodayLogins({ available: false, count: 0 })
-    setBossState({ available: false, hp: 0, maxHp: 5000, defeated: false })
   }
 
   /* Close WotD if open, then open the requested modal */
@@ -568,32 +497,6 @@ export default function App() {
           <span className="font-black text-sm">我的宠物</span>
         </button>
 
-        {/* Missions button */}
-        {missions && (() => {
-          const done  = missions.missions.filter(m => m.done).length
-          const total = missions.missions.length
-          const allClaimed     = done === total && missions.bonusClaimed
-          const hasUnclaimed   = !wotdClaimed || done < total
-          return (
-            <button
-              onClick={() => openModal(setShowMissions)}
-              className={`hud-pill relative flex items-center gap-1 rounded-full px-3 py-1 border shrink-0 text-sm font-black ${
-                allClaimed && wotdClaimed
-                  ? 'bg-neon-green/10 border-neon-green/40 text-neon-green'
-                  : hasUnclaimed
-                    ? 'bg-neon-gold/10 border-neon-gold/40 text-neon-gold animate-pulse2'
-                    : 'bg-neon-gold/15 border-neon-gold/60 text-neon-gold animate-glow'
-              }`}
-            >
-              <span className="text-base">📜</span>
-              <span className="tabular-nums">{done}/{total}</span>
-              {((done === total && !missions.bonusClaimed) || !wotdClaimed) && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-neon-gold rounded-full border-2 border-cyber animate-pulse" />
-              )}
-            </button>
-          )
-        })()}
-
         {/* 今日复习 — spaced-repetition deck */}
         <button
           onClick={() => openModal(setShowReview)}
@@ -615,7 +518,7 @@ export default function App() {
           )}
         </button>
 
-        {/* AI 词语老师 chatbot launcher — beside 今日任务 */}
+        {/* AI 词语老师 chatbot launcher */}
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('vocab_open_chat'))}
           className="hud-pill flex items-center gap-1 rounded-full px-3 py-1 shrink-0 text-sm font-black"
@@ -625,29 +528,6 @@ export default function App() {
           <span className="text-base">📚</span>
           <span>词语老师</span>
         </button>
-
-        {/* Global boss */}
-        {bossState.available && (() => {
-          const boss = getCurrentBoss()
-          return (
-            <button
-              onClick={() => openModal(setShowBoss)}
-              className={`hud-pill relative flex items-center gap-1 rounded-full px-3 py-1 border shrink-0 text-sm font-black ${
-                bossState.defeated
-                  ? 'bg-neon-green/10 border-neon-green/40 text-neon-green'
-                  : 'bg-neon-pink/10 border-neon-pink/35 text-neon-pink hover:bg-neon-pink/20'
-              } ${bossShake ? 'animate-shake' : ''}`}
-              title="全班 Boss"
-            >
-              <span className="text-base">{bossState.defeated ? '🏆' : boss.emoji}</span>
-              {bossState.defeated ? (
-                <span>已击败</span>
-              ) : (
-                <span className="tabular-nums">{bossState.hp.toLocaleString()}</span>
-              )}
-            </button>
-          )
-        })()}
 
         <div className="flex-1" />
 
@@ -890,10 +770,8 @@ export default function App() {
       {/* ── Modals ───────────────────────────────────────── */}
       {showProfile  && <ProfileModal user={user} onClose={() => setShowProfile(false)} />}
       {showPet      && <PetModal onClose={() => { setShowPet(false); refreshUser() }} />}
-      {showMissions && <MissionsModal units={UNITS} onOpenWotD={() => { setShowMissions(false); setShowWotD(true) }} onClose={() => setShowMissions(false)} />}
       {showWotD     && <WordOfDayModal units={UNITS} onClose={() => setShowWotD(false)} />}
       {showLogins   && <TodayLoginsModal currentName={user.name} onClose={() => setShowLogins(false)} />}
-      {showBoss     && <GlobalBossModal currentName={user.name} onClose={() => setShowBoss(false)} />}
       {showReview   && <ReviewModal units={UNITS} onClose={() => setShowReview(false)} />}
 
       {/* ── Achievement toast ──────────────────────────── */}
@@ -902,42 +780,6 @@ export default function App() {
       {/* ── Floating coin popup ────────────────────────── */}
       {coinPopup && (
         <CoinPopup key={coinPopup.id} amount={coinPopup.amount} onDone={() => setCoinPopup(null)} />
-      )}
-
-      {/* ── Boss damage toast ──────────────────────────── */}
-      {bossToast && (
-        <BossDamageToast key={bossToast.id} damage={bossToast.damage} defeated={bossToast.defeated} onDone={() => setBossToast(null)} />
-      )}
-
-      {/* ── Mission complete toast ─────────────────────── */}
-      {missionDone && (
-        <div className="fixed top-32 left-1/2 -translate-x-1/2 z-[55] pointer-events-auto animate-slideUp">
-          <button
-            onClick={() => { setMissionDone(null); setShowMissions(true) }}
-            className={`flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border-2 transition-all hover:scale-105 ${
-              missionDone.kind === 'all_three'
-                ? 'border-neon-gold/60 text-neon-gold'
-                : 'border-neon-cyan/60 text-neon-cyan'
-            }`}
-            style={{
-              background: missionDone.kind === 'all_three'
-                ? 'rgba(255,214,10,0.12)' : 'rgba(0,240,255,0.10)',
-              backdropFilter: 'blur(16px)',
-              boxShadow: missionDone.kind === 'all_three'
-                ? '0 0 30px rgba(255,214,10,0.3)' : '0 0 30px rgba(0,240,255,0.3)',
-            }}
-          >
-            <span className="text-3xl">{missionDone.icon || '📜'}</span>
-            <div className="text-left">
-              <p className="font-black text-base leading-tight">
-                {missionDone.kind === 'all_three' ? '🎊 全部任务完成！' : '任务完成！'}
-              </p>
-              <p className="text-sm leading-tight opacity-75">
-                {missionDone.text} · +{missionDone.reward} 🪙
-              </p>
-            </div>
-          </button>
-        </div>
       )}
 
       {/* ── AI Chatbot ──────────────────────────────────── */}

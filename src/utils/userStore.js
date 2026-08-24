@@ -1,6 +1,5 @@
 import { DEFAULT_OWNED_CHAR, DEFAULT_CHARACTER } from './shopData'
 import { DEFAULT_PET_OWNED } from './petShopData'
-import { MISSION_EVENTS, ALL_3_BONUS, generateDailyMissions } from './missions'
 import { WORD_OF_DAY_REWARD } from './wordOfDay'
 
 const USERS_KEY   = 'vocab_users'
@@ -24,7 +23,7 @@ function yesterdayStr() { const d = new Date(); d.setDate(d.getDate()-1); return
 function twoDaysAgoStr(){ const d = new Date(); d.setDate(d.getDate()-2); return d.toISOString().slice(0,10) }
 
 // In-memory cache — avoids repeated JSON.parse/stringify within the same
-// synchronous call chain (e.g. addCoins → addXP → trackMissionProgress).
+// synchronous call chain (e.g. addCoins → addXP → trackWordResult).
 let _cache = null
 
 function loadUsers() {
@@ -143,8 +142,6 @@ function ensureDefaults(u) {
   // New character system
   if (!u.character) u.character = { ...DEFAULT_CHARACTER }
 
-  // Daily missions (lazy — populated on first read each day)
-  if (u.dailyMissions === undefined) u.dailyMissions = null
 
   // Word of the day claim record
   if (u.wordOfTheDay === undefined) u.wordOfTheDay = null
@@ -188,13 +185,6 @@ function emitAchievement(def) {
 function emitCoins(amount, total) {
   window.dispatchEvent(new CustomEvent('vocab_coins', { detail: { amount, total } }))
 }
-function emitMissionComplete(mission) {
-  window.dispatchEvent(new CustomEvent('vocab_mission_complete', { detail: mission }))
-}
-function emitMissionsChanged() {
-  window.dispatchEvent(new CustomEvent('vocab_missions_changed'))
-}
-
 function checkAchievements(u) {
   const earned = new Set(u.achievements || [])
 
@@ -409,81 +399,6 @@ export function claimWordOfTheDay() {
   emitCoins(WORD_OF_DAY_REWARD, u.coins)
   window.dispatchEvent(new CustomEvent('vocab_wotd_claimed'))
   return true
-}
-
-/* ── Daily missions ──────────────────────────────────── */
-
-/** Returns today's mission state. Regenerates if date rolled over. */
-export function getDailyMissions() {
-  const name = getCurrentName(); if (!name) return null
-  const users = loadUsers(); const u = users[name]; if (!u) return null
-  ensureDefaults(u)
-  const today = todayStr()
-  if (!u.dailyMissions || u.dailyMissions.date !== today) {
-    u.dailyMissions = {
-      date: today,
-      missions: generateDailyMissions(today),
-      bonusClaimed: false,
-    }
-    saveUsers(users)
-  }
-  return JSON.parse(JSON.stringify(u.dailyMissions))
-}
-
-/** Increment progress for any active mission listening to `eventType`.
- *  Auto-grants coin reward and emits events when a mission completes. */
-export function trackMissionProgress(eventType, amount = 1) {
-  const name = getCurrentName(); if (!name) return
-  const users = loadUsers(); const u = users[name]; if (!u) return
-  ensureDefaults(u)
-  const today = todayStr()
-  if (!u.dailyMissions || u.dailyMissions.date !== today) {
-    u.dailyMissions = {
-      date: today,
-      missions: generateDailyMissions(today),
-      bonusClaimed: false,
-    }
-  }
-
-  let changed = false
-  for (const m of u.dailyMissions.missions) {
-    if (m.done) continue
-    const events = MISSION_EVENTS[m.id]
-    if (!events || !events.includes(eventType)) continue
-    m.progress = Math.min(m.target, m.progress + amount)
-    changed = true
-    if (m.progress >= m.target) {
-      m.done = true
-      u.coins = (u.coins || 0) + m.reward
-      saveUsers(users)
-      emitCoins(m.reward, u.coins)
-      emitMissionComplete({ ...m, kind: 'mission' })
-    }
-  }
-
-  // All-3 bonus
-  if (
-    !u.dailyMissions.bonusClaimed &&
-    u.dailyMissions.missions.length === 3 &&
-    u.dailyMissions.missions.every(m => m.done)
-  ) {
-    u.dailyMissions.bonusClaimed = true
-    u.coins = (u.coins || 0) + ALL_3_BONUS
-    saveUsers(users)
-    emitCoins(ALL_3_BONUS, u.coins)
-    emitMissionComplete({
-      id: '__all_three__',
-      kind: 'all_three',
-      text: '三任务全清！',
-      reward: ALL_3_BONUS,
-      icon: '🎊',
-    })
-  }
-
-  if (changed) {
-    saveUsers(users)
-    emitMissionsChanged()
-  }
 }
 
 export function saveBossScore(unitNum, mistakes) {

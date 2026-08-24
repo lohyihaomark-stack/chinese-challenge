@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { addCoins, trackMissionProgress, getCurrentName } from '../utils/userStore'
-import { applyBossDamage } from '../utils/globalBoss'
+import { addCoins } from '../utils/userStore'
 
 /* ── Detect if message is mostly English ─────────────── */
 function isEnglish(text) {
@@ -197,8 +196,6 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
     const correct = text.trim() === duel.word
     if (correct) {
       addCoins(4)
-      trackMissionProgress('duel:correct')
-      applyBossDamage(getCurrentName(), 1)
       setMessages(prev => [
         ...prev,
         { role: 'user', content: text.trim() },
@@ -248,7 +245,6 @@ export default function ChatBot({ allUnits, studentName, currentUnitIndex }) {
     const history = [...messages, userMsg]
     setMessages([...history, { role: 'assistant', content: '', streaming: true }])
     setLoading(true)
-    trackMissionProgress('chat:msg')
 
     const apiHistory = history.map(m => ({ role: m.role, content: m.content }))
 

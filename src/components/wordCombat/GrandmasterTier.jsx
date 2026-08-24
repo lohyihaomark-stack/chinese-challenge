@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { speak } from '../../utils/speech'
-import { addCoins, trackMissionProgress, saveCombatTier } from '../../utils/userStore'
+import { addCoins, saveCombatTier } from '../../utils/userStore'
 import { buildHanziOptions, buildDefinitionOptions } from '../../utils/questionEngine'
 
 function shuffle(arr) {
@@ -84,8 +84,6 @@ export default function GrandmasterTier({ vocabs, unitNum, onBack }) {
       saveCombatTier(unitNum, 'grandmaster', { score: total })
       addCoins(10)
       if (mistakes === 0) addCoins(6)
-      trackMissionProgress('boss:perfect')
-      trackMissionProgress('match:complete')
       setPhase('victory')
     } else {
       setPhase('defeat')

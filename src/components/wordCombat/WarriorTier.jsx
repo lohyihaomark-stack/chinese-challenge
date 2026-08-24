@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { speak } from '../../utils/speech'
-import { addCoins, trackMissionProgress, saveCombatTier } from '../../utils/userStore'
+import { addCoins, saveCombatTier } from '../../utils/userStore'
 import { shuffle, buildHanziOptions, pickCloze } from '../../utils/questionEngine'
 
 const TIME_LIMIT      = 60
@@ -42,7 +42,6 @@ export default function WarriorTier({ vocabs, unitNum, onBack }) {
     saveCombatTier(unitNum, 'warrior', { score, bestCombo })
     addCoins(5)
     if (wrongCount === 0) addCoins(2)
-    trackMissionProgress('match:complete')
     setGameState('victory')
   }
   const finishDefeat = () => {
@@ -55,7 +54,6 @@ export default function WarriorTier({ vocabs, unitNum, onBack }) {
     if (opt === q.hanzi) {
       speak(q.hanzi)
       addCoins(1)
-      trackMissionProgress('boss:correct')
       setCorrect(c => c + 1)
       setCombo(prev => {
         const next = prev + 1

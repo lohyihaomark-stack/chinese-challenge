@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { speak } from '../utils/speech'
-import { saveBossScore, addCoins, trackMissionProgress, getCurrentName, getCombatDamageMultiplier } from '../utils/userStore'
-import { applyBossDamage } from '../utils/globalBoss'
+import { saveBossScore, addCoins } from '../utils/userStore'
 import { nextQuestions, pickCloze, buildHanziOptions } from '../utils/questionEngine'
 
 /* Pick 15 fresh cloze questions (cycles the unit before repeating) and
@@ -158,7 +157,6 @@ export default function BossBattle({ vocabs, unitNum }) {
     if (opt === q.hanzi) {
       speak(q.hanzi)
       addCoins(1)
-      trackMissionProgress('boss:correct')
       setBossDamaged(true)
       setTimeout(() => setBossDamaged(false), 650)
       setCorrectCount(c => c + 1)
@@ -176,10 +174,6 @@ export default function BossBattle({ vocabs, unitNum }) {
       const mistakes = PLAYER_MAX_HP - playerHP
       saveBossScore(unitNum, mistakes)
       addCoins(mistakes === 0 ? 18 : 6)
-      trackMissionProgress('boss:complete')
-      if (mistakes === 0) trackMissionProgress('boss:perfect')
-      const mult = getCombatDamageMultiplier(unitNum)
-      applyBossDamage(getCurrentName(), Math.round(correctCount * 2 * mult))
       setGameState('victory')
     } else {
       setIdx(i => i + 1)

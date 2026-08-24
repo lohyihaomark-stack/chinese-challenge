@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import HanziWriter from 'hanzi-writer'
-import { addXP, trackMissionProgress, trackWordResult } from '../utils/userStore'
+import { addXP, trackWordResult } from '../utils/userStore'
 import { nextQuestions } from '../utils/questionEngine'
 import { speak } from '../utils/speech'
 
@@ -229,7 +229,6 @@ export default function HandwritingGame({ vocabs, unitNum }) {
     setTotalXP(prev => prev + xp)
     trackWordResult(unitNum, q.id, isCorrect)
     setScores(prev => [...prev, isCorrect ? 'correct' : 'practiced'])
-    trackMissionProgress('vocab_xp', 1)
     // Reset for next question
     charRefs.current = []
     setDrawnImages([])

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { addXP, trackMissionProgress, trackWordResult } from '../utils/userStore'
+import { addXP, trackWordResult } from '../utils/userStore'
 import { nextQuestions } from '../utils/questionEngine'
 
 const MAX_QUESTIONS = 15
@@ -56,7 +56,6 @@ export default function VocabWritingGame({ vocabs, unitNum }) {
       trackWordResult(unitNum, q.id, data.verdict === 'correct')
       setResult({ verdict: data.verdict, feedback: data.feedback, cfg })
       setScores(prev => [...prev, data.verdict])
-      trackMissionProgress('vocab_xp', 1)
     } catch {
       setResult({ verdict: 'partial', feedback: 'AI 暂时无法连接，请稍后再试。', cfg: VERDICT_CONFIG.partial })
       setScores(prev => [...prev, 'partial'])

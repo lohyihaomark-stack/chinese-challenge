@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { saveMatchScore, addCoins, trackMissionProgress, getCurrentName } from '../utils/userStore'
-import { applyBossDamage } from '../utils/globalBoss'
+import { saveMatchScore, addCoins } from '../utils/userStore'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -52,7 +51,6 @@ export default function VocabMatchGame({ vocabs, unitNum }) {
 
     if (selected === id) {
       addCoins(1)
-      trackMissionProgress('match:correct')
       const next = new Set(matched)
       next.add(id)
       setMatched(next)
@@ -60,14 +58,12 @@ export default function VocabMatchGame({ vocabs, unitNum }) {
       setScore(s => s + 1)
 
       if (next.size === batch.length) {
-        applyBossDamage(getCurrentName(), Math.ceil(batch.length / 3))
         setTimeout(() => {
           if (batchIdx + 1 >= allBatches.current.length) {
             const finalPct = (attempts + 1) > 0
               ? Math.round(((score + 1) / (attempts + 1)) * 100) : 100
             saveMatchScore(unitNum, finalPct)
             addCoins(2)
-            trackMissionProgress('match:complete')
             setDone(true)
           } else {
             setBatchIdx(b => b + 1)
