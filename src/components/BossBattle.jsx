@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { speak } from '../utils/speech'
-import { saveBossScore, addCoins } from '../utils/userStore'
+import { saveBossScore, addCoins, trackModeUse } from '../utils/userStore'
 import { nextQuestions, pickCloze, buildHanziOptions } from '../utils/questionEngine'
 
 /* Pick 15 fresh cloze questions (cycles the unit before repeating) and
@@ -152,6 +152,7 @@ export default function BossBattle({ vocabs, unitNum }) {
   /* ── Interaction handlers ── */
   const handleSelect = (opt) => {
     if (answered) return
+    trackModeUse('boss')
     setSelected(opt)
 
     if (opt === q.hanzi) {

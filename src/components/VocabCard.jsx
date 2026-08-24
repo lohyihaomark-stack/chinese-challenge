@@ -1,5 +1,6 @@
 import { useState, memo } from 'react'
 import { speak } from '../utils/speech'
+import { trackModeUse } from '../utils/userStore'
 import StrokeOrder from './StrokeOrder'
 
 /* ── Tone-colour helpers ─────────────────────────────── */
@@ -78,7 +79,7 @@ const VocabCard = memo(function VocabCard({ vocab, index }) {
 
         {/* ── Expand toggle ─────────────────────────────── */}
         <button
-          onClick={() => setShowDetails(s => !s)}
+          onClick={() => { if (!showDetails) trackModeUse('vocab'); setShowDetails(s => !s) }}
           className="flex items-center gap-1 text-sm font-semibold transition-all"
           style={{ color: 'rgba(0,212,255,0.5)' }}
           onMouseEnter={e => e.currentTarget.style.color = 'rgba(0,212,255,0.9)'}

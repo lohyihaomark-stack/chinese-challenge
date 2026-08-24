@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { addXP, trackWordResult, getDueReviews } from '../utils/userStore'
+import { addXP, trackWordResult, getDueReviews, trackModeUse } from '../utils/userStore'
 import { buildHanziOptions, pickCloze } from '../utils/questionEngine'
 import { speak } from '../utils/speech'
 
@@ -37,6 +37,7 @@ export default function ReviewModal({ units, onClose }) {
 
   const handleSelect = (opt) => {
     if (selected !== null || !q) return
+    trackModeUse('review')
     setSelected(opt)
     const correct = opt === q.vocab.hanzi
     if (correct) speak(q.vocab.hanzi)

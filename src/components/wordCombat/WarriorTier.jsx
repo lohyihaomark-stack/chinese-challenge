@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { speak } from '../../utils/speech'
-import { addCoins, saveCombatTier } from '../../utils/userStore'
+import { addCoins, saveCombatTier, trackModeUse } from '../../utils/userStore'
 import { shuffle, buildHanziOptions, pickCloze } from '../../utils/questionEngine'
 
 const TIME_LIMIT      = 60
@@ -50,6 +50,7 @@ export default function WarriorTier({ vocabs, unitNum, onBack }) {
 
   const handleSelect = (opt) => {
     if (selected !== null || gameState !== 'playing') return
+    trackModeUse('boss')
     setSelected(opt)
     if (opt === q.hanzi) {
       speak(q.hanzi)

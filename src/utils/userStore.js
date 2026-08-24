@@ -170,6 +170,13 @@ function ensureDefaults(u) {
   // ── Per-word mastery { [unitNum]: { [vocabId]: { seen, correct, wrong, lastSeen } } } ──
   if (!u.wordMastery) u.wordMastery = {}
 
+  // ── Attendance log — dates the student logged in (last 60 days) ──
+  // Seed from lastLoginDate so pre-existing accounts aren't blank.
+  if (!Array.isArray(u.loginDates)) u.loginDates = u.lastLoginDate ? [u.lastLoginDate] : []
+
+  // ── Practice count per game mode, for the teacher usage report ──
+  if (!u.modeUsage) u.modeUsage = {}
+
   if (!u.ownedPetItems) {
     u.ownedPetItems = [...DEFAULT_PET_OWNED]
   } else {
@@ -252,10 +259,28 @@ export function loginUser(name) {
     }
   }
 
+  // Record today on the attendance log (last 60 days kept)
+  const rec = users[name]
+  if (!Array.isArray(rec.loginDates)) rec.loginDates = []
+  if (!rec.loginDates.includes(today)) {
+    rec.loginDates.push(today)
+    if (rec.loginDates.length > 60) rec.loginDates = rec.loginDates.slice(-60)
+  }
+
   checkAchievements(users[name])
   saveUsers(users)
   localStorage.setItem(SESSION_KEY, name)
   return { name, isNew, ...users[name] }
+}
+
+/** Count one practice action in a game mode, for the teacher's usage report.
+ *  mode ∈ 'vocab'|'sentence'|'match'|'boss'|'writing'|'handwriting'|'review' */
+export function trackModeUse(mode, amount = 1) {
+  const name = getCurrentName(); if (!name) return
+  const users = loadUsers(); const u = users[name]; if (!u) return
+  ensureDefaults(u)
+  u.modeUsage[mode] = (u.modeUsage[mode] || 0) + amount
+  saveUsers(users)
 }
 
 /** Add coins to current user. Dispatches vocab_coins event. */
@@ -634,6 +659,8 @@ export function syncProgress() {
     matchHighPct:  u.matchHighPct    || {},
     wordMastery:   u.wordMastery     || {},
     combatProgress:u.combatProgress  || {},
+    loginDates:    u.loginDates      || [],
+    modeUsage:     u.modeUsage       || {},
     streakFreezes: u.streakFreezes   ?? 2,
     coins:         u.coins           || 0,
   }

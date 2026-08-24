@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { saveMatchScore, addCoins } from '../utils/userStore'
+import { saveMatchScore, addCoins, trackModeUse } from '../utils/userStore'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -51,6 +51,7 @@ export default function VocabMatchGame({ vocabs, unitNum }) {
 
     if (selected === id) {
       addCoins(1)
+      trackModeUse('match')
       const next = new Set(matched)
       next.add(id)
       setMatched(next)

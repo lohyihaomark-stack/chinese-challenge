@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { speak } from '../../utils/speech'
-import { addCoins, saveCombatTier } from '../../utils/userStore'
+import { addCoins, saveCombatTier, trackModeUse } from '../../utils/userStore'
 import { nextQuestions, shuffle } from '../../utils/questionEngine'
 
 const BATCH = 4
@@ -27,6 +27,7 @@ export default function ApprenticeTier({ vocabs, unitNum, onBack }) {
   const handleMeaning = (id) => {
     if (matched.has(id) || wrong || selected === null) return
     setAttempts(a => a + 1)
+    trackModeUse('boss')
     if (selected === id) {
       addCoins(1)
       const next = new Set(matched); next.add(id)

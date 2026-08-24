@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { speak } from '../../utils/speech'
-import { addCoins, saveCombatTier } from '../../utils/userStore'
+import { addCoins, saveCombatTier, trackModeUse } from '../../utils/userStore'
 import { buildHanziOptions, buildDefinitionOptions } from '../../utils/questionEngine'
 
 function shuffle(arr) {
@@ -202,6 +202,7 @@ export default function GrandmasterTier({ vocabs, unitNum, onBack }) {
   const phaseTotal = phase === 'A' ? PHASE_A_COUNT : phase === 'B' ? PHASE_B_COUNT : PHASE_C_COUNT
 
   const onPhaseAnswer = (correct) => {
+    trackModeUse('boss')
     if (!correct) setMistakes(m => m + 1)
     if (phase === 'A' && correct) setScoreA(s => s + 1)
     if (phase === 'B' && correct) setScoreB(s => s + 1)

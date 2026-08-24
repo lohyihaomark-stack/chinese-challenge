@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { addXP, addCoins, trackWordResult } from '../utils/userStore'
+import { addXP, addCoins, trackWordResult, trackModeUse } from '../utils/userStore'
 import { nextQuestions } from '../utils/questionEngine'
 import { speak } from '../utils/speech'
 
@@ -54,6 +54,7 @@ export default function SentenceBuilderGame({ vocabs, unitNum }) {
     const sentence = text.trim()
     if (!sentence || loading) return
     setLoading(true)
+    trackModeUse('sentence')
     try {
       const resp = await fetch('/api/check-sentence', {
         method:  'POST',

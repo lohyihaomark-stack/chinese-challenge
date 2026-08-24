@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { addXP, trackWordResult } from '../utils/userStore'
+import { addXP, trackWordResult, trackModeUse } from '../utils/userStore'
 import { nextQuestions } from '../utils/questionEngine'
 
 const MAX_QUESTIONS = 15
@@ -34,6 +34,7 @@ export default function VocabWritingGame({ vocabs, unitNum }) {
     const trimmed = answer.trim()
     if (!trimmed || loading) return
     setLoading(true)
+    trackModeUse('writing')
 
     try {
       const resp = await fetch('/api/check-meaning', {
