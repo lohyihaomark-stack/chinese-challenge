@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { speak } from '../../utils/speech'
-import { addCoins, saveCombatTier, trackModeUse } from '../../utils/userStore'
+import { addCoins, addXP, saveCombatTier, trackModeUse } from '../../utils/userStore'
 import { buildHanziOptions, buildDefinitionOptions } from '../../utils/questionEngine'
 
 function shuffle(arr) {
@@ -83,6 +83,7 @@ export default function GrandmasterTier({ vocabs, unitNum, onBack }) {
     if (total >= Math.ceil(max * 0.5)) {
       saveCombatTier(unitNum, 'grandmaster', { score: total })
       addCoins(10)
+      addXP(40 + total * 8, 'combat_grandmaster_clear')
       if (mistakes === 0) addCoins(6)
       setPhase('victory')
     } else {

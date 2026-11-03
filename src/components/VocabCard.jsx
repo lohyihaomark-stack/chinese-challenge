@@ -1,7 +1,10 @@
-import { useState, memo } from 'react'
+import { useState, memo, lazy, Suspense } from 'react'
 import { speak } from '../utils/speech'
 import { trackModeUse } from '../utils/userStore'
-import StrokeOrder from './StrokeOrder'
+
+// Lazy so hanzi-writer stays out of the first-load bundle — stroke order is
+// opt-in, two taps deep.
+const StrokeOrder = lazy(() => import('./StrokeOrder'))
 
 /* ── Tone-colour helpers ─────────────────────────────── */
 const TONE_COLORS = {
@@ -150,7 +153,11 @@ const VocabCard = memo(function VocabCard({ vocab, index }) {
               </button>
               {showStrokes && (
                 <div className="mt-2 pt-2 view-enter" style={{ borderTop: '1px solid rgba(0,212,255,0.1)' }}>
-                  <StrokeOrder word={vocab.hanzi} />
+                  <Suspense fallback={
+                    <p className="text-sm font-mono py-3 text-center" style={{ color: 'rgba(6,214,160,0.45)' }}>载入笔画…</p>
+                  }>
+                    <StrokeOrder word={vocab.hanzi} />
+                  </Suspense>
                 </div>
               )}
             </div>

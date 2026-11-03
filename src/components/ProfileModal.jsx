@@ -1,4 +1,4 @@
-import { ACHIEVEMENTS } from '../utils/userStore'
+import { ACHIEVEMENTS, getMyWeakWords } from '../utils/userStore'
 
 const UNIT_NAMES  = { 1: '单元一', 2: '单元二', 3: '单元三', 4: '单元四', 5: '单元五', 6: '单元六' }
 const BOSS_NAMES  = { 1: '词汇魔王', 2: '年兽', 3: '词语狮王', 4: '习惯魔君', 5: '创新领主', 6: '贡献之神' }
@@ -30,8 +30,9 @@ function BossRow({ unitNum, score }) {
   )
 }
 
-export default function ProfileModal({ user, onClose }) {
+export default function ProfileModal({ user, units = [], onClose }) {
   const earned = new Set(user.achievements || [])
+  const weak   = getMyWeakWords(units, 12)
 
   return (
     <div
@@ -105,6 +106,44 @@ export default function ProfileModal({ user, onClose }) {
                 )
               })}
             </div>
+          </div>
+
+          {/* ── My weak words ────────────────────────────── */}
+          <div className="p-5 border-b-2 border-brick/10">
+            <p className="text-base font-bold text-brick/40 uppercase tracking-wider mb-3">
+              🔴 我的弱点词语{weak.length > 0 && ` — ${weak.length} 个`}
+            </p>
+            {weak.length === 0 ? (
+              <p className="text-brick/45 text-base bg-cream-dark rounded-xl px-4 py-4 text-center leading-relaxed">
+                还没有答错的词语。<br />
+                <span className="text-sm text-brick/35">多玩几个模式，这里会列出你最需要复习的词。</span>
+              </p>
+            ) : (
+              <>
+                <div className="flex flex-col gap-2">
+                  {weak.map(w => (
+                    <div key={`${w.unitNum}-${w.vocab.id}`}
+                         className="flex items-center gap-3 bg-cream-dark rounded-xl px-4 py-3">
+                      <span className="text-brick font-black text-xl shrink-0">{w.vocab.hanzi}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-brick/55 text-sm font-mono">{w.vocab.pinyin}</p>
+                        <p className="text-brick/70 text-sm leading-snug truncate">{w.vocab.definition}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-black text-lg"
+                           style={{ color: w.rate >= 60 ? '#c0392b' : w.rate >= 30 ? '#b8860b' : '#1A6B5A' }}>
+                          {w.rate}%
+                        </p>
+                        <p className="text-brick/35 text-xs">错 {w.wrong}/{w.seen} 次</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-brick/40 text-sm mt-3 text-center">
+                  答错的词会自动出现在「📖 复习」里，直到你记住为止。
+                </p>
+              </>
+            )}
           </div>
 
           {/* ── Achievements ─────────────────────────────── */}

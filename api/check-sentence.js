@@ -4,6 +4,23 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 
+/* The reference example is visible to students in 词汇 mode and is shown after
+ * every answer, so pasting it back is the obvious way to farm XP. Catch it
+ * deterministically rather than hoping the model notices. */
+function normalize(s) {
+  return (s || '').replace(/[\s，。！？、；：""''（）《》…—,.!?;:()"']/g, '')
+}
+
+function isCopiedExample(sentence, example) {
+  const a = normalize(sentence)
+  const b = normalize(example)
+  if (!a || !b || b.length < 8) return false
+  if (a === b) return true
+  // Near-verbatim: one wholly contains the other and they're about the same length.
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a]
+  return long.includes(short) && short.length / long.length >= 0.8
+}
+
 /* ── Offline fallback ──────────────────────────────────────────────────────
    Can't judge meaning without the model, so only check the structural
    basics: did they use the word, and is it a real sentence?
@@ -39,6 +56,14 @@ export default async function handler(req, res) {
   const { hanzi, pinyin, definition, example, studentSentence } = req.body || {}
   const sentence = (studentSentence || '').trim().slice(0, 300)
   if (!hanzi || !sentence) return res.status(400).json({ error: 'bad_input' })
+
+  if (isCopiedExample(sentence, example)) {
+    return res.status(200).json({
+      verdict: 'partial',
+      feedback: `这是课本的参考例句，不是你自己写的句子哦。老师想看看你怎么用「${hanzi}」。`,
+      suggestion: `试着换个场景，写一句关于你自己、家人或学校的句子。`,
+    })
+  }
 
   const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim()
   if (!apiKey) {

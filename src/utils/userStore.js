@@ -505,17 +505,6 @@ export function getCombatDamageMultiplier(unitNum) {
   return 1.0
 }
 
-/* ── Story Adventure ──────────────────────────────────── */
-
-/** Get story progress for a given world. Returns { storyXP, episodes: {id: {completed, stars}} } */
-export function getStoryProgress(worldId) {
-  const name  = getCurrentName(); if (!name) return { storyXP: 0, episodes: {} }
-  const users = loadUsers(); const u = users[name]; if (!u) return { storyXP: 0, episodes: {} }
-  ensureDefaults(u)
-  const sp = u.storyProgress?.[worldId] || {}
-  return { storyXP: u.storyXP || 0, episodes: sp }
-}
-
 /* ── Pet Accessory Shop ───────────────────────────────── */
 
 /** Buy a pet accessory item. Returns updated { coins, ownedPetItems } or null if failed. */
@@ -604,37 +593,22 @@ export function getDueReviews(units, max = 12) {
   return out.sort((a, b) => b.score - a.score).slice(0, max)
 }
 
-/** Return vocabs the student has answered wrong at least once, sorted by
- *  wrong-rate descending (hardest first).  Pass the full vocabs array. */
-export function getWeakWords(unitNum, vocabs) {
+/** The student's own worst words across every unit — the mirror of what the
+ *  teacher sees in 常错词语, so a student can revise what they actually miss. */
+export function getMyWeakWords(units, max = 12) {
   const name = getCurrentName(); if (!name) return []
-  const users = loadUsers(); const u = users[name]; if (!u) return []
-  const mastery = u.wordMastery?.[String(unitNum)] || {}
-  return vocabs
-    .filter(v => {
+  const users = loadUsers(); const u = users[name]; if (!u?.wordMastery) return []
+  const out = []
+  for (const unit of units) {
+    const mastery = u.wordMastery[String(unit.unit)] || {}
+    for (const v of unit.vocabs) {
       const m = mastery[String(v.id)]
-      return m && m.seen > 0 && m.wrong > 0
-    })
-    .sort((a, b) => {
-      const ma = mastery[String(a.id)]
-      const mb = mastery[String(b.id)]
-      return (mb.wrong / mb.seen) - (ma.wrong / ma.seen)   // highest wrong-rate first
-    })
-}
-
-/** Save completed episode and award XP. */
-export function saveEpisodeComplete(worldId, episodeId, stars, xp) {
-  const name  = getCurrentName(); if (!name) return
-  const users = loadUsers(); const u = users[name]; if (!u) return
-  ensureDefaults(u)
-  if (!u.storyProgress)          u.storyProgress = {}
-  if (!u.storyProgress[worldId]) u.storyProgress[worldId] = {}
-  const prev = u.storyProgress[worldId][episodeId]
-  if (!prev || stars > (prev.stars || 0)) {
-    u.storyProgress[worldId][episodeId] = { completed: true, stars }
+      if (!m || !m.seen || !m.wrong) continue
+      out.push({ vocab: v, unitNum: unit.unit, seen: m.seen, wrong: m.wrong,
+                 rate: Math.round((m.wrong / m.seen) * 100) })
+    }
   }
-  u.storyXP = (u.storyXP || 0) + xp
-  saveUsers(users)
+  return out.sort((a, b) => b.rate - a.rate || b.wrong - a.wrong).slice(0, max)
 }
 
 /* ── Teacher dashboard sync ──────────────────────────── */

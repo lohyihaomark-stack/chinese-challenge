@@ -1,5 +1,8 @@
 import { useState, useMemo, useRef } from 'react'
-import { saveMatchScore, addCoins, trackModeUse } from '../utils/userStore'
+import { saveMatchScore, addCoins, addXP, trackModeUse } from '../utils/userStore'
+
+const XP_PER_MATCH = 3
+const XP_COMPLETE  = 15
 
 function shuffle(arr) {
   const a = [...arr]
@@ -51,6 +54,7 @@ export default function VocabMatchGame({ vocabs, unitNum }) {
 
     if (selected === id) {
       addCoins(1)
+      addXP(XP_PER_MATCH, 'match')
       trackModeUse('match')
       const next = new Set(matched)
       next.add(id)
@@ -65,6 +69,7 @@ export default function VocabMatchGame({ vocabs, unitNum }) {
               ? Math.round(((score + 1) / (attempts + 1)) * 100) : 100
             saveMatchScore(unitNum, finalPct)
             addCoins(2)
+            addXP(XP_COMPLETE, 'match_complete')
             setDone(true)
           } else {
             setBatchIdx(b => b + 1)

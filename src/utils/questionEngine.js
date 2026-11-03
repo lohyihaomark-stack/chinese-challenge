@@ -137,6 +137,12 @@ export function buildDefinitionOptions(correct, pool, total = 4) {
 
 const _queues = new Map()
 
+/** Drop every cycle queue. Called on login/logout so a shared classroom laptop
+ *  doesn't hand the next student the previous student's position in the pool. */
+export function resetQuestionQueues() {
+  _queues.clear()
+}
+
 function refill(pool, unitNum) {
   let seen = null
   try { seen = unitNum != null ? getSeenIds(unitNum) : null } catch { seen = null }

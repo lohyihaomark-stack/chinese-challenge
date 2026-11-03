@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import unit1 from './data/unit1.json'
 import unit2 from './data/unit2.json'
 import unit3 from './data/unit3.json'
@@ -7,18 +7,21 @@ import unit5 from './data/unit5.json'
 import unit6 from './data/unit6.json'
 import UnitPage from './components/UnitPage'
 import LoginScreen from './components/LoginScreen'
-import ProfileModal from './components/ProfileModal'
-import PetModal from './components/PetModal'
 import PetCreature, { getStage, getPetStageInfo, PET_STAGES } from './components/PetCreature'
 import AchievementToast from './components/AchievementToast'
-import ChatBot from './components/ChatBot'
 import CoinPopup from './components/CoinPopup'
-import WordOfDayModal from './components/WordOfDayModal'
-import TodayLoginsModal from './components/TodayLoginsModal'
 import FloatingParticles from './components/FloatingParticles'
-import ReviewModal from './components/ReviewModal'
 import { loginUser, getSession, logoutUser, isWordOfDayClaimed, getLevelInfo, syncProgress, restoreXP, getDueReviews } from './utils/userStore'
-import TeacherDashboard from './components/TeacherDashboard'
+import { resetQuestionQueues } from './utils/questionEngine'
+
+// Overlays load on demand — none is on screen at first paint.
+const ProfileModal     = lazy(() => import('./components/ProfileModal'))
+const PetModal         = lazy(() => import('./components/PetModal'))
+const ChatBot          = lazy(() => import('./components/ChatBot'))
+const WordOfDayModal   = lazy(() => import('./components/WordOfDayModal'))
+const TodayLoginsModal = lazy(() => import('./components/TodayLoginsModal'))
+const ReviewModal      = lazy(() => import('./components/ReviewModal'))
+const TeacherDashboard = lazy(() => import('./components/TeacherDashboard'))
 
 
 /* ══════════════════════════════════════════════════════════
@@ -294,6 +297,7 @@ export default function App() {
   }
 
   const handleLogin  = (name) => {
+    resetQuestionQueues()
     const u = loginUser(name)
     setUser(u)
     setXpData(getLevelInfo(u.globalXP || 0))
@@ -311,6 +315,7 @@ export default function App() {
     if (!claimed) setTimeout(() => setShowWotD(true), 800)
   }
   const handleLogout = () => {
+    resetQuestionQueues()
     logoutUser(); setUser(null)
     setShowProfile(false); setShowPet(false); setShowWotD(false); setShowLogins(false); setShowReview(false)
     setTodayLogins({ available: false, count: 0 })
@@ -767,12 +772,16 @@ export default function App() {
 
       </div>
 
-      {/* ── Modals ───────────────────────────────────────── */}
-      {showProfile  && <ProfileModal user={user} onClose={() => setShowProfile(false)} />}
-      {showPet      && <PetModal onClose={() => { setShowPet(false); refreshUser() }} />}
-      {showWotD     && <WordOfDayModal units={UNITS} onClose={() => setShowWotD(false)} />}
-      {showLogins   && <TodayLoginsModal currentName={user.name} onClose={() => setShowLogins(false)} />}
-      {showReview   && <ReviewModal units={UNITS} onClose={() => setShowReview(false)} />}
+      {/* ── Modals (each its own chunk; nothing to show while loading) ──── */}
+      <Suspense fallback={null}>
+        {showProfile  && <ProfileModal user={user} units={UNITS} onClose={() => setShowProfile(false)} />}
+        {showPet      && <PetModal onClose={() => { setShowPet(false); refreshUser() }} />}
+        {showWotD     && <WordOfDayModal units={UNITS} onClose={() => setShowWotD(false)} />}
+        {showLogins   && <TodayLoginsModal currentName={user.name} onClose={() => setShowLogins(false)} />}
+        {showReview   && <ReviewModal units={UNITS} onClose={() => setShowReview(false)} />}
+        {showTeacher  && <TeacherDashboard onClose={() => setShowTeacher(false)} />}
+        <ChatBot allUnits={UNITS} studentName={user.name} currentUnitIndex={activeUnit} />
+      </Suspense>
 
       {/* ── Achievement toast ──────────────────────────── */}
       {toast && <AchievementToast achievement={toast} onDone={() => setToast(null)} />}
@@ -780,14 +789,6 @@ export default function App() {
       {/* ── Floating coin popup ────────────────────────── */}
       {coinPopup && (
         <CoinPopup key={coinPopup.id} amount={coinPopup.amount} onDone={() => setCoinPopup(null)} />
-      )}
-
-      {/* ── AI Chatbot ──────────────────────────────────── */}
-      <ChatBot allUnits={UNITS} studentName={user.name} currentUnitIndex={activeUnit} />
-
-      {/* ── Teacher dashboard overlay ─────────────────── */}
-      {showTeacher && (
-        <TeacherDashboard onClose={() => setShowTeacher(false)} />
       )}
     </div>
   )

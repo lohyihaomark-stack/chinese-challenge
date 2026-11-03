@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { speak } from '../../utils/speech'
-import { addCoins, saveCombatTier, trackModeUse } from '../../utils/userStore'
+import { addCoins, addXP, saveCombatTier, trackModeUse } from '../../utils/userStore'
 import { nextQuestions, shuffle } from '../../utils/questionEngine'
 
 const BATCH = 4
@@ -30,6 +30,7 @@ export default function ApprenticeTier({ vocabs, unitNum, onBack }) {
     trackModeUse('boss')
     if (selected === id) {
       addCoins(1)
+      addXP(5, 'combat_apprentice')
       const next = new Set(matched); next.add(id)
       setMatched(next)
       setSelected(null)
@@ -56,6 +57,7 @@ export default function ApprenticeTier({ vocabs, unitNum, onBack }) {
     const score = a > 0 ? Math.round((c / a) * 100) : 100
     saveCombatTier(unitNum, 'apprentice', { score })
     addCoins(2)   // completion bonus
+    addXP(15, 'combat_apprentice_clear')
     setDone(true)
   }
 

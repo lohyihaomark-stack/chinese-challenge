@@ -1,11 +1,24 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import VocabCard from './VocabCard'
-import WordCombatHub from './wordCombat/WordCombatHub'
-import SentenceBuilderGame from './SentenceBuilderGame'
-import VocabMatchGame from './VocabMatchGame'
-import VocabWritingGame from './VocabWritingGame'
-import HandwritingGame from './HandwritingGame'
 import ErrorBoundary from './ErrorBoundary'
+
+// Only 词汇 loads up front; each game ships as its own chunk so the first
+// paint on a school laptop isn't waiting on modes the student hasn't opened.
+const WordCombatHub       = lazy(() => import('./wordCombat/WordCombatHub'))
+const SentenceBuilderGame = lazy(() => import('./SentenceBuilderGame'))
+const VocabMatchGame      = lazy(() => import('./VocabMatchGame'))
+const VocabWritingGame    = lazy(() => import('./VocabWritingGame'))
+const HandwritingGame     = lazy(() => import('./HandwritingGame'))
+
+function ModeLoading() {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center gap-3">
+      <div className="w-9 h-9 rounded-full animate-spin"
+           style={{ border: '3px solid rgba(0,212,255,0.15)', borderTopColor: '#00d4ff' }} />
+      <p className="text-sm font-mono" style={{ color: 'rgba(0,212,255,0.4)' }}>载入中…</p>
+    </div>
+  )
+}
 
 const TABS = [
   { id: 'vocab',       label: '📚 词汇', color: '#00d4ff' },
@@ -117,7 +130,9 @@ export default function UnitPage({ unit, user }) {
       {/* ── Content ── */}
       <ErrorBoundary key={view}>
         <div className="flex-1 overflow-hidden flex flex-col view-enter">
-          {renderView(unit)}
+          <Suspense fallback={<ModeLoading />}>
+            {renderView(unit)}
+          </Suspense>
         </div>
       </ErrorBoundary>
     </div>

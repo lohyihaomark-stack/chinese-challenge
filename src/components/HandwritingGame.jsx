@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import HanziWriter from 'hanzi-writer'
 import { addXP, trackWordResult, trackModeUse } from '../utils/userStore'
+import { charDataLoader } from '../utils/hanziData'
 import { nextQuestions } from '../utils/questionEngine'
 import { speak } from '../utils/speech'
 
@@ -34,25 +35,22 @@ function TonedPinyin({ pinyin }) {
   )
 }
 
-/* ── HanziWriter data loader ─────────────────────────── */
-function loadCharData(char, cb) {
-  fetch(`https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${char}.json`)
-    .then(r => r.json()).then(cb).catch(() => cb(null))
-}
-
 /* ── Animated stroke-order reveal ───────────────────── */
 function CharReveal({ char }) {
   const divRef    = useRef(null)
   const writerRef = useRef(null)
+  const [failed, setFailed] = useState(false)
+
   useEffect(() => {
     if (!divRef.current) return
+    setFailed(false)
     divRef.current.innerHTML = ''
     writerRef.current = HanziWriter.create(divRef.current, char, {
       width: 120, height: 120, padding: 8,
       showOutline: true,
       strokeColor:  '#8B2500',
       outlineColor: '#d4a070',
-      charDataLoader: loadCharData,
+      charDataLoader: charDataLoader(() => setFailed(true)),
     })
     const t = setTimeout(() => writerRef.current?.animateCharacter(), 300)
     return () => clearTimeout(t)
@@ -62,24 +60,35 @@ function CharReveal({ char }) {
     <div className="flex flex-col items-center gap-1.5">
       <div
         ref={divRef}
+        className="flex items-center justify-center"
         style={{
           width: 120, height: 120,
           background: '#fff', borderRadius: 10,
           border: '2px solid rgba(6,214,160,0.5)',
           boxShadow: '0 0 14px rgba(6,214,160,0.2)',
         }}
-      />
-      <button
-        onClick={() => writerRef.current?.animateCharacter()}
-        className="text-xs font-bold px-3 py-1 rounded-full transition-all active:scale-95"
-        style={{
-          background: 'rgba(6,214,160,0.12)',
-          border: '1px solid rgba(6,214,160,0.4)',
-          color: '#06d6a0',
-        }}
       >
-        ▶ 重播
-      </button>
+        {/* The reveal is the answer — if strokes can't load, still show the word. */}
+        {failed && <span style={{ fontSize: 68, fontWeight: 900, color: '#8B2500' }}>{char}</span>}
+      </div>
+      {failed ? (
+        <span className="text-xs px-2 py-1 rounded-full"
+              style={{ background: 'rgba(255,214,10,0.1)', border: '1px solid rgba(255,214,10,0.35)', color: 'rgba(255,214,10,0.85)' }}>
+          笔画动画暂不可用
+        </span>
+      ) : (
+        <button
+          onClick={() => writerRef.current?.animateCharacter()}
+          className="text-xs font-bold px-3 py-1 rounded-full transition-all active:scale-95"
+          style={{
+            background: 'rgba(6,214,160,0.12)',
+            border: '1px solid rgba(6,214,160,0.4)',
+            color: '#06d6a0',
+          }}
+        >
+          ▶ 重播
+        </button>
+      )}
     </div>
   )
 }

@@ -15,10 +15,21 @@ export default class ErrorBoundary extends Component {
     console.error('[ErrorBoundary]', error, info.componentStack)
   }
 
-  reset = () => this.setState({ error: null })
+  // A failed dynamic import stays cached inside React, so re-rendering can
+  // never recover it — that case needs a real reload.
+  isChunkError() {
+    const m = this.state.error?.message || ''
+    return /dynamically imported module|Importing a module script failed|Failed to fetch/i.test(m)
+  }
+
+  reset = () => {
+    if (this.isChunkError()) window.location.reload()
+    else this.setState({ error: null })
+  }
 
   render() {
     if (this.state.error) {
+      const stale = this.isChunkError()
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-8">
           <div className="glass-card p-8 text-center max-w-sm w-full animate-fadeIn">
@@ -27,13 +38,13 @@ export default class ErrorBoundary extends Component {
               出错了
             </h2>
             <p className="text-sm mb-1 font-mono" style={{ color: 'rgba(200,230,255,0.5)' }}>
-              这个游戏遇到了问题
+              {stale ? '网站刚更新了，请重新载入' : '这个游戏遇到了问题'}
             </p>
             <p className="text-xs mb-6 font-mono truncate max-w-full" style={{ color: 'rgba(200,230,255,0.25)' }}>
-              {this.state.error?.message || '未知错误'}
+              {stale ? '你的进度已保存，不会丢失' : (this.state.error?.message || '未知错误')}
             </p>
             <button onClick={this.reset} className="neon-btn px-8 py-2 text-base font-black">
-              重　试
+              {stale ? '重新载入' : '重　试'}
             </button>
           </div>
         </div>
